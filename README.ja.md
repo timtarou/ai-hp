@@ -30,7 +30,7 @@ Claude Code と Codex の両方で使えるスキルです（ターミナルか�
 
 ## インストール
 
-**Node.js 22.18 以上**が必要です（TypeScript をそのまま実行します。依存パッケージはありません）。対象にしたい `claude` / `codex` の CLI も必要です。
+**Node.js 18 以上**が必要です（依存パッケージはありません）。対象にしたい `claude` / `codex` の CLI も必要です。
 
 ### Claude Code（プラグイン）
 
@@ -87,7 +87,7 @@ sh skills/ai-hp/scripts/add-codex-account.sh work
 ## 設定
 
 ```
-node skills/ai-hp/scripts/cli.ts [--lang en|ja] [--no-comment] [--debug]
+node skills/ai-hp/dist/cli.js [--lang en|ja] [--no-comment] [--debug]
 ```
 
 | 設定 | 引数 | 環境変数 | `config.json` | 既定 |
@@ -117,8 +117,11 @@ node skills/ai-hp/scripts/cli.ts [--lang en|ja] [--no-comment] [--debug]
 
 ## 開発
 
+ソースは `skills/ai-hp/scripts/` の TypeScript です。スキルが実行するのは `skills/ai-hp/dist/` に変換した JavaScript で、Node 18 以上で動くようリポジトリに含めています。開発には Node.js 22.18 以上が必要です（テストが TypeScript を直接実行するため）。
+
 ```bash
-npm install        # 型チェック用（TypeScript と @types/node）
+npm install        # TypeScript と @types/node
+npm run build      # ソースを変えたら skills/ai-hp/dist を作り直す（忘れるとテストが失敗する）
 npm test
 npm run typecheck
 ```

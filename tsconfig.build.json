@@ -1,0 +1,14 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": false,
+    "allowImportingTsExtensions": false,
+    "rewriteRelativeImportExtensions": true,
+    "target": "ES2022",
+    "rootDir": "skills/ai-hp/scripts",
+    "outDir": "skills/ai-hp/dist",
+    "removeComments": false,
+    "newLine": "lf"
+  },
+  "include": ["skills/ai-hp/scripts"]
+}

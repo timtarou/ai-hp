@@ -5,11 +5,11 @@ description: Show weekly usage limits, reset times, Claude's model-specific week
 
 # AI usage limits
 
-Run `scripts/cli.ts` in this skill's directory with Node.js 22.18+ and show its Markdown output to the user as-is.
+Run `dist/cli.js` in this skill's directory with Node.js 18+ and show its Markdown output to the user as-is.
 
 ```bash
-node <this skill's directory>/scripts/cli.ts --lang en   # English
-node <this skill's directory>/scripts/cli.ts --lang ja   # 日本語
+node <this skill's directory>/dist/cli.js --lang en   # English
+node <this skill's directory>/dist/cli.js --lang ja   # 日本語
 ```
 
 Pass `--lang` matching the language the user is writing in.

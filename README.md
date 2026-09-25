@@ -30,7 +30,7 @@ A skill for both Claude Code and Codex (and a plain command). It asks each CLI's
 
 ## Install
 
-Requires **Node.js 22.18+** (it runs the TypeScript sources directly; no dependencies) and the `claude` and/or `codex` CLIs you want to cover.
+Requires **Node.js 18+** (no dependencies) and the `claude` and/or `codex` CLIs you want to cover.
 
 ### Claude Code (plugin)
 
@@ -87,7 +87,7 @@ sh skills/ai-hp/scripts/add-codex-account.sh work
 ## Options
 
 ```
-node skills/ai-hp/scripts/cli.ts [--lang en|ja] [--no-comment] [--debug]
+node skills/ai-hp/dist/cli.js [--lang en|ja] [--no-comment] [--debug]
 ```
 
 | Setting | Command line | Environment | `config.json` | Default |
@@ -117,8 +117,11 @@ Both return the server's current values, so a forced or early reset shows up on 
 
 ## Development
 
+The sources are TypeScript in `skills/ai-hp/scripts/`; the skill runs the JavaScript build in `skills/ai-hp/dist/`, which is committed so that it works on Node 18+. Development needs Node.js 22.18+ (the tests run the TypeScript directly).
+
 ```bash
-npm install        # TypeScript and @types/node for type checking
+npm install        # TypeScript and @types/node
+npm run build      # regenerate skills/ai-hp/dist after changing the sources (a test fails if you forget)
 npm test
 npm run typecheck
 ```

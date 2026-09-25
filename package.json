@@ -6,10 +6,11 @@
   "type": "module",
   "license": "MIT",
   "engines": {
-    "node": ">=22.18"
+    "node": ">=18"
   },
   "scripts": {
-    "quota": "node skills/ai-hp/scripts/cli.ts",
+    "quota": "node skills/ai-hp/dist/cli.js",
+    "build": "tsc -p tsconfig.build.json",
     "install-skills": "sh scripts/install-skills.sh",
     "add-claude": "sh skills/ai-hp/scripts/add-claude-account.sh",
     "add-codex": "sh skills/ai-hp/scripts/add-codex-account.sh",

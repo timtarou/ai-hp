@@ -13,7 +13,7 @@ import type { Skipped, Snapshot } from "./types.ts";
 
 const HELP = `ai-hp — weekly usage limits, reset times and banked resets for all your Claude Code and Codex accounts
 
-Usage: node cli.ts [--lang en|ja] [--no-comment] [--debug]
+Usage: node dist/cli.js [--lang en|ja] [--no-comment] [--debug]
 
   --lang en|ja   output language (default: AI_HP_LANG, config.json, or your OS locale)
   --no-comment   leave out the witty one-liners after the table
