@@ -37,7 +37,7 @@ Claude Code と Codex の両方で使えるスキルです（ターミナルか�
 - **週間 残り**：10 マスの棒と、残りの割合（20% 未満は太字）
 - **別枠（週間）**：Claude の **Fable** のように、別に予算を持つモデル別の週間枠
 - **短期枠**：5 時間枠（Claude と、5 時間枠のある Codex のプラン）
-- **Banked reset**：取っておいたリセット権の数と失効日時（Codex）。Claude の Banked reset は Claude Code の窓口から取得できないため、Claude の行は「—」になります
+- **Banked reset**：取っておいたリセット権の数と失効日時（Codex）。Claude の Banked reset は Claude Code の窓口から取得できないため、Claude の行は「—」になります（[表示しない理由](#claude-の-banked-reset表示しない理由)）
 - 同じメールアドレスの**個人と Team** は利用枠が別なので、別の行になります
 - 今回取得できなかったアカウントは、前回の値に〔○時点〕を付けて表示します
 - **💬 ひとこと**：表の下に、数字に合わせたゲーム・アニメ風の一言を出します。1日以内にリセットされるのに枠が余っていれば「宝箱を開けずにダンジョンを出る気か？ 急いでぶん回せ！」、赤ゲージなら「作戦は『いのちだいじに』で」、Banked reset の失効が近ければ「ラストエリクサーは使ってこそ」、どれもほぼ枠がなければ課金のすすめ、など。スキルとして呼ぶと、Claude や Codex がその時のミームで一言を足します。`--no-comment` で消せます
@@ -138,6 +138,15 @@ node skills/ai-hp/dist/cli.js [--lang en|ja] [--no-comment] [--debug]   # same, 
 | Codex | `CODEX_HOME` ごとに `codex app-server` を起動し、`account/read` と `account/rateLimits/read` を送る | なし |
 
 どちらもサーバーの現在値を返すので、強制リセットなどでリセット日時が変わっても次の実行で反映されます。各アカウントには並行して問い合わせます（全体で数秒）。前回値は `~/Library/Caches/ai-hp`（macOS）、`~/.cache/ai-hp`（Linux）、`%LOCALAPPDATA%\ai-hp`（Windows）に残し、14 日で捨てます。
+
+### Claude の Banked reset（表示しない理由）
+
+Claude の Banked reset は、Claude Code が外部のツールに提供している窓口（`get_usage`）に含まれないため、ai-hp では「—」と表示します。取得する方法自体はあります（Claude Code のログイン情報を使い、Claude Code を名乗って、Claude Code 自身が使う使用量 API を呼ぶ方法）。ただし ai-hp はこれを行わず、おすすめもしません。
+
+- サブスクリプションのログイン情報を Claude Code の外で使い、公式のクライアントを装うことになります。Anthropic の規約に反し、アカウントに影響が出るおそれがあります
+- 公開 API ではないため、予告なく変わる可能性があります
+
+使える Banked reset があることは、利用上限に達したときなどに Claude Code 自身が知らせてくれます。
 
 ## 制約
 

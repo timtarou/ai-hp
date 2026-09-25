@@ -37,7 +37,7 @@ A skill for both Claude Code and Codex (and a plain command). It asks each CLI's
 - **Weekly left** — a 10-cell bar plus the percentage left (bold under 20%).
 - **Other weekly** — model-specific weekly limits with their own budget, such as Claude's **Fable** limit.
 - **Short-term** — the 5-hour limit (Claude, and Codex plans that have one).
-- **Banked resets** — resets you have in reserve, with their expiry (Codex). Claude Code does not expose Claude’s banked resets, so Claude rows show “—”.
+- **Banked resets** — resets you have in reserve, with their expiry (Codex). Claude Code does not expose Claude’s banked resets, so Claude rows show “—” (see [Claude's banked resets](#claudes-banked-resets-not-shown)).
 - The same email with a **personal and a Team plan** shows as two rows, because they have separate limits.
 - Accounts that could not be read this time show their last values, marked *as of …*.
 - **💬 One-liners** under the table react to the numbers with game and anime flavor: burn quota that resets within a day ("Don't leave the dungeon with unopened chests!"), save an account in the red ("Tactics: don't use MP"), use a banked reset before it expires ("The Last Elixir is meant to be used"), or buy extra usage when everything is nearly empty. When run as a skill, Claude or Codex adds one more line with a timely meme. Turn them off with `--no-comment`.
@@ -138,6 +138,15 @@ node skills/ai-hp/dist/cli.js [--lang en|ja] [--no-comment] [--debug]   # same, 
 | Codex | `codex app-server` per `CODEX_HOME`, with `account/read` and `account/rateLimits/read` | none |
 
 Both return the server's current values, so a forced or early reset shows up on the next run. Accounts are queried in parallel (a few seconds in total). Last values are kept in `~/Library/Caches/ai-hp` (macOS), `~/.cache/ai-hp` (Linux) or `%LOCALAPPDATA%\ai-hp` (Windows) and dropped after 14 days.
+
+### Claude's banked resets (not shown)
+
+Claude's banked resets are not part of what Claude Code exposes to other tools (`get_usage`), so ai-hp shows "—" for them. There is a way to read them — calling the usage endpoint that Claude Code itself uses, with your Claude Code login credentials, while identifying as Claude Code — but ai-hp does not do this, and we don't recommend it:
+
+- It uses your subscription credentials outside Claude Code and impersonates the official client. That may go against Anthropic's terms and put your account at risk.
+- The endpoint is not a public API and can change without notice.
+
+Claude Code itself tells you when you have a reset available, for example when you reach a usage limit.
 
 ## Limitations
 
