@@ -161,9 +161,8 @@ export function renderReport(input) {
     }
     if (rows.length === 0)
         lines.push(`| — | — | ${t("noAccounts")} | | | | |`);
-    if (input.comments && input.comments.length > 0) {
-        lines.push("", input.comments.map((c) => `> 💬 ${c}`).join("\n>\n"));
-    }
+    if (input.comment)
+        lines.push("", `> 💬 ${input.comment}`);
     const notes = [];
     if (input.cached.length > 0)
         notes.push(t("noteStale"));

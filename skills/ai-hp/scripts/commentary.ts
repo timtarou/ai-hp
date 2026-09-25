@@ -4,8 +4,10 @@ import { formatRemaining } from "./time.ts";
 import type { Limit, Snapshot } from "./types.ts";
 
 /**
- * 表のあとに出す「ひとこと」。数字から状況を判定し、ゲームやアニメのネタを混ぜた言い回しを選ぶ。
- * 引用は短い決め台詞にとどめる。毎回同じにならないよう、言い回しは候補から選ぶ。
+ * 表のあとに出す「ひとこと」（1 行だけ）。数字から、いま一番役に立つ状況を 1 つ選び、
+ * ゲームやアニメのネタを混ぜた言い回しにする。引用は短い決め台詞にとどめる。
+ * 毎回同じにならないよう、言い回しは候補から選ぶ。スキルとして呼ばれたときは、AI がこの 1 行を
+ * その時のミームで書き直す（SKILL.md）。
  */
 type Pool = Record<Lang, string[]>;
 
@@ -62,6 +64,17 @@ const POOLS = {
       "{who} is down, yet has {n} banked reset(s) in the bag. Revive and carry on.",
     ],
   },
+  // 残り 0% で Banked reset を持っているが、自然なリセットまで 2 日以内: 温存
+  keepBanked: {
+    ja: [
+      "{who} は{left}で宿屋（リセット）に着く。ザオリクは次の全滅まで温存で。",
+      "{who} はリセットまで{left}。Banked reset は使わずに、ひと晩寝て回復しよう。",
+    ],
+    en: [
+      "{who} reaches the inn {left} — save the Phoenix Down for the next wipe.",
+      "{who} resets {left}. Sleep it off and keep the banked reset for later.",
+    ],
+  },
   // Banked reset の失効が近い
   bankedExpiring: {
     ja: [
@@ -84,7 +97,7 @@ const POOLS = {
       "{who} is at {r}%, but the {scope} bench has {f}% left. Sub them in!",
     ],
   },
-  // 残りが少なく、リセットまで遠い
+  // 元気なアカウントがなく、残りが少ない
   lowHp: {
     ja: [
       "{who} は HP {r}%、リセットまで{left}。作戦は『いのちだいじに』で。",
@@ -119,7 +132,6 @@ export type Picker = (count: number) => number;
 const randomPicker: Picker = (count) => Math.floor(Math.random() * count);
 
 const PROVIDER_NAME = { claude: "Claude", codex: "Codex" } as const;
-const MAX_COMMENTS = 3;
 
 function fill(template: string, params: Record<string, string | number>): string {
   return template.replace(/\{(\w+)\}/g, (_, name: string) => String(params[name] ?? `{${name}}`));
@@ -149,8 +161,13 @@ function usableCredits(s: Snapshot, now: Date): { count: number; soonest?: Date 
   return { count, soonest };
 }
 
-/** 今回取得できたアカウントから、状況に合った「ひとこと」を最大 3 件選ぶ（前回値は使わない） */
-export function commentary(fresh: Snapshot[], now: Date, pick: Picker = randomPicker): string[] {
+/**
+ * 今回取得できたアカウントから、いま一番役に立つ「ひとこと」を 1 行だけ選ぶ（前回値は使わない）。
+ * 優先順: 全体の枠切れ（課金 / 回復待ち）→ 消える枠をぶん回せ → Banked reset を使え / 温存 →
+ * Banked reset の失効間近 → 別枠は別腹 → 元気なアカウントを使え → 赤ゲージは温存。
+ * アカウントがあれば必ず 1 行返す。
+ */
+export function oneLiner(fresh: Snapshot[], now: Date, pick: Picker = randomPicker): string | undefined {
   const lang = getLang();
   const label = labeler(fresh);
   const accounts: Account[] = [];
@@ -160,77 +177,67 @@ export function commentary(fresh: Snapshot[], now: Date, pick: Picker = randomPi
     const hoursLeft = weekly.resetsAt ? (weekly.resetsAt.getTime() - now.getTime()) / 3_600_000 : undefined;
     accounts.push({ s, weekly, r: remainingPercent(weekly.usedPercent), hoursLeft });
   }
-  if (accounts.length === 0) return [];
+  if (accounts.length === 0) return undefined;
 
-  const out: string[] = [];
   const say = (situation: Situation, params: Record<string, string | number>) => {
     const pool = POOLS[situation][lang];
-    out.push(fill(pool[pick(pool.length) % pool.length], params));
+    return fill(pool[pick(pool.length) % pool.length], params);
   };
   const left = (d: Date) => formatRemaining(now, d);
   const upcoming = (a: Account) => a.hoursLeft !== undefined && a.hoursLeft > 0;
-  const allEmpty = accounts.every((a) => a.r === 0);
-  const anyCredits = accounts.some((a) => usableCredits(a.s, now).count > 0);
+  const bySoonest = (a: Account, b: Account) => (a.hoursLeft ?? Infinity) - (b.hoursLeft ?? Infinity);
+  const credits = (a: Account) => usableCredits(a.s, now);
+  const anyCredits = accounts.some((a) => credits(a).count > 0);
+  const soonest = accounts.filter(upcoming).sort(bySoonest)[0];
 
-  // 全滅でも Banked reset があるなら「待て」ではなく、下で「使え」と言う
-  if (allEmpty && !anyCredits) {
-    const next = accounts.filter(upcoming).sort((a, b) => (a.hoursLeft ?? 0) - (b.hoursLeft ?? 0))[0];
-    if (next?.weekly.resetsAt) say("allEmpty", { who: label(next.s), left: left(next.weekly.resetsAt) });
-  } else if (!allEmpty) {
-    // リセットまで 24 時間以内で残り 50% 以上: 使わないと消える（近い順に 2 件まで）
-    accounts
-      .filter((a) => upcoming(a) && (a.hoursLeft ?? 0) <= 24 && a.r >= 50)
-      .sort((a, b) => (a.hoursLeft ?? 0) - (b.hoursLeft ?? 0))
-      .slice(0, 2)
-      .forEach((a) => a.weekly.resetsAt && say("useItOrLoseIt", { who: label(a.s), r: a.r, left: left(a.weekly.resetsAt) }));
-  }
-
-  // どのアカウントも残り 15% 未満、いちばん早いリセットでも 1 日以上先、使える Banked reset もない
-  const soonestReset = accounts
-    .filter(upcoming)
-    .sort((a, b) => (a.hoursLeft ?? 0) - (b.hoursLeft ?? 0))[0];
-  // 全体の枠が少なくても、別枠（Fable 等）が残っていればまだ作業できるので「ほぼ枠なし」に数えない
+  // 1. 全体の枠切れ（Banked reset もない）: 回復が 1 日より先なら課金、近いなら待つ
+  //    別枠（Fable 等）が 15% 以上残っていれば、まだ作業できるので枠切れに数えない
   const nearlyEmpty = (a: Account) =>
     a.r < 15 && !a.s.limits.some((l) => l.kind === "scoped" && remainingPercent(l.usedPercent) >= 15);
-  if (
-    accounts.every(nearlyEmpty) &&
-    soonestReset?.weekly.resetsAt &&
-    (soonestReset.hoursLeft ?? 0) > 24 &&
-    !anyCredits
-  ) {
-    say("buyMore", { left: left(soonestReset.weekly.resetsAt) });
-  }
-
-  // 残り 0% で、リセットまでまだ 1 日以上あるのに Banked reset を持っている
-  const revivable = accounts.find((a) => a.r === 0 && usableCredits(a.s, now).count > 0 && !(upcoming(a) && (a.hoursLeft ?? 0) <= 24));
-  if (revivable) say("bankedAtZero", { who: label(revivable.s), n: usableCredits(revivable.s, now).count });
-
-  // Banked reset の失効が 7 日以内（上で触れたアカウントは除く）
-  const expiring = accounts
-    .filter((a) => a !== revivable)
-    .map((a) => ({ a, soonest: usableCredits(a.s, now).soonest }))
-    .filter((x): x is { a: Account; soonest: Date } => !!x.soonest && x.soonest.getTime() - now.getTime() <= 7 * 24 * 3_600_000)
-    .sort((x, y) => x.soonest.getTime() - y.soonest.getTime())[0];
-  if (expiring) say("bankedExpiring", { who: label(expiring.a.s), left: left(expiring.soonest) });
-
-  // 全体の枠は 30% 未満なのに、別枠（Fable 等）は 80% 以上残っている
-  for (const a of accounts) {
-    const scoped = a.s.limits.find((l) => l.kind === "scoped" && remainingPercent(l.usedPercent) >= 80);
-    if (a.r < 30 && scoped) {
-      say("separateStomach", { who: label(a.s), r: a.r, scope: scoped.scope ?? "?", f: remainingPercent(scoped.usedPercent) });
-      break;
+  if (!anyCredits && accounts.every(nearlyEmpty) && soonest?.weekly.resetsAt) {
+    if ((soonest.hoursLeft ?? 0) > 24) return say("buyMore", { left: left(soonest.weekly.resetsAt) });
+    if (accounts.every((a) => a.r === 0)) {
+      return say("allEmpty", { who: label(soonest.s), left: left(soonest.weekly.resetsAt) });
     }
   }
 
-  if (!allEmpty) {
-    // 残り 20% 未満で、リセットまで 2 日以上ある
-    const low = accounts.find((a) => a.r > 0 && a.r < 20 && (a.hoursLeft ?? 0) > 48);
-    if (low?.weekly.resetsAt) say("lowHp", { who: label(low.s), r: low.r, left: left(low.weekly.resetsAt) });
-
-    // いちばん余裕のあるアカウント（同じならリセットが近い方）
-    const best = [...accounts].sort((a, b) => b.r - a.r || (a.hoursLeft ?? Infinity) - (b.hoursLeft ?? Infinity))[0];
-    if (best.r >= 30) say("bestPick", { who: label(best.s), r: best.r });
+  // 2. リセットまで 24 時間以内で残り 50% 以上: 使わないと消える
+  const expiringQuota = accounts.filter((a) => upcoming(a) && (a.hoursLeft ?? 0) <= 24 && a.r >= 50).sort(bySoonest)[0];
+  if (expiringQuota?.weekly.resetsAt) {
+    return say("useItOrLoseIt", { who: label(expiringQuota.s), r: expiringQuota.r, left: left(expiringQuota.weekly.resetsAt) });
   }
 
-  return out.slice(0, MAX_COMMENTS);
+  // 3. 残り 0% で Banked reset を持っている: 自然なリセットが 2 日より先なら使え、近いなら温存
+  const down = accounts.filter((a) => a.r === 0 && credits(a).count > 0);
+  const revive = down.find((a) => !upcoming(a) || (a.hoursLeft ?? 0) > 48);
+  if (revive) return say("bankedAtZero", { who: label(revive.s), n: credits(revive).count });
+  const keep = down.filter(upcoming).sort(bySoonest)[0];
+  if (keep?.weekly.resetsAt) return say("keepBanked", { who: label(keep.s), left: left(keep.weekly.resetsAt) });
+
+  // 4. Banked reset の失効が 7 日以内
+  const expiring = accounts
+    .map((a) => ({ a, at: credits(a).soonest }))
+    .filter((x): x is { a: Account; at: Date } => !!x.at && x.at.getTime() - now.getTime() <= 7 * 24 * 3_600_000)
+    .sort((x, y) => x.at.getTime() - y.at.getTime())[0];
+  if (expiring) return say("bankedExpiring", { who: label(expiring.a.s), left: left(expiring.at) });
+
+  // 5. 全体の枠は 30% 未満なのに、別枠（Fable 等）は 80% 以上残っている
+  for (const a of accounts) {
+    const scoped = a.s.limits.find((l) => l.kind === "scoped" && remainingPercent(l.usedPercent) >= 80);
+    if (a.r < 30 && scoped) {
+      return say("separateStomach", { who: label(a.s), r: a.r, scope: scoped.scope ?? "?", f: remainingPercent(scoped.usedPercent) });
+    }
+  }
+
+  // 6. 残り 50% 以上のアカウントがあれば、それを使えと言う（同じならリセットが近い方）
+  const best = [...accounts].sort((a, b) => b.r - a.r || bySoonest(a, b))[0];
+  if (best.r >= 50) return say("bestPick", { who: label(best.s), r: best.r });
+
+  // 7. 元気なアカウントがなく、残り 20% 未満のアカウントがある: 温存
+  const low = accounts.filter((a) => a.r > 0 && a.r < 20).sort((a, b) => a.r - b.r)[0];
+  if (low?.weekly.resetsAt) return say("lowHp", { who: label(low.s), r: low.r, left: left(low.weekly.resetsAt) });
+
+  // 8. それ以外は、いちばん余裕のあるアカウント
+  if (best.r > 0) return say("bestPick", { who: label(best.s), r: best.r });
+  return soonest?.weekly.resetsAt ? say("allEmpty", { who: label(soonest.s), left: left(soonest.weekly.resetsAt) }) : undefined;
 }

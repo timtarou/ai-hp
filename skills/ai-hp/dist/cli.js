@@ -3,7 +3,7 @@ import { hostname, tmpdir } from "node:os";
 import path from "node:path";
 import { loadCache, pickCachedOnly, saveCache } from "./cache.js";
 import { collectClaude } from "./collect/claude.js";
-import { commentary } from "./commentary.js";
+import { oneLiner } from "./commentary.js";
 import { collectCodex } from "./collect/codex.js";
 import { detectSources, findExecutable } from "./detect.js";
 import { getLang, setLang, t } from "./i18n.js";
@@ -14,7 +14,7 @@ const HELP = `ai-hp — weekly usage limits, reset times and banked resets for a
 Usage: node dist/cli.js [--lang en|ja] [--no-comment] [--debug]
 
   --lang en|ja   output language (default: AI_HP_LANG, config.json, or your OS locale)
-  --no-comment   leave out the witty one-liners after the table
+  --no-comment   leave out the one-liner after the table
   --debug        print the raw server responses to stderr (no tokens) for bug reports
 
 Settings file: ${path.join(configDir(), "config.json")}
@@ -106,7 +106,7 @@ async function main(argv) {
         now,
         host: hostname().replace(/\.local$/, ""),
         timeZone: settings.timeZone,
-        comments: settings.commentary ? commentary(fresh, now) : [],
+        comment: settings.commentary ? oneLiner(fresh, now) : undefined,
     }));
     return fresh.length === 0 && problems.length > 0 ? 1 : 0;
 }

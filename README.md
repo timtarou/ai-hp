@@ -27,7 +27,7 @@ A skill for both Claude Code and Codex (and a plain command). It asks each CLI's
 
 - In Claude Code and Codex, any request about usage limits, remaining quota, reset times or banked resets starts it.
 - **English or Japanese:** ask "in English" / "in Japanese" in Claude Code or Codex, or run `npm start -- --lang en` (or `ja`) in the terminal. Without it, your OS language is used.
-- **Without the one-liners:** ask for it, or run `npm start -- --no-comment`.
+- **Without the one-liner:** ask for it, or run `npm start -- --no-comment`.
 - If you installed from a clone with `npm run install-skills` (below), the commands are `/ai-hp` in Claude Code and `$ai-hp` in Codex.
 - Requires **Node.js 18+** (no dependencies) and the `claude` and/or `codex` CLIs you want to cover.
 
@@ -41,7 +41,7 @@ A skill for both Claude Code and Codex (and a plain command). It asks each CLI's
 - A plain **“—”** under *Other weekly* or *Short-term* means that account has no such limit.
 - The same email with a **personal and a Team plan** shows as two rows, because they have separate limits.
 - Accounts that could not be read this time show their last values, marked *as of …*.
-- **💬 One-liners** under the table, and one more from Claude or Codex when run as a skill. Turn them off with `--no-comment`.
+- **💬 One-liner** under the table: one line of advice for right now (Claude or Codex rewrite it on the spot when run as a skill). Turn it off with `--no-comment`.
 
 ## Install in detail
 
@@ -131,7 +131,7 @@ node skills/ai-hp/dist/cli.js [--lang en|ja] [--no-comment] [--debug]   # same, 
 |---|---|---|---|---|
 | Language | `--lang en\|ja` | `AI_HP_LANG` | `"lang"` | your OS locale |
 | Time zone | | `AI_HP_TZ` | `"timeZone"` | your OS time zone |
-| One-liners after the table | `--no-comment` to hide | `AI_HP_COMMENTARY=0` | `"commentary": false` | on |
+| One-liner after the table | `--no-comment` to hide | `AI_HP_COMMENTARY=0` | `"commentary": false` | on |
 | Raw responses to stderr | `--debug` | `AI_HP_DEBUG=1` | | off |
 | Folders to read | | `AI_HP_CLAUDE_DIRS`, `AI_HP_CODEX_HOMES` | | auto-detected |
 
