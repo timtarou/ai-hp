@@ -9,7 +9,7 @@
     "node": ">=18"
   },
   "scripts": {
-    "quota": "node skills/ai-hp/dist/cli.js",
+    "start": "node skills/ai-hp/dist/cli.js",
     "build": "tsc -p tsconfig.build.json",
     "install-skills": "sh scripts/install-skills.sh",
     "add-claude": "sh skills/ai-hp/scripts/add-claude-account.sh",

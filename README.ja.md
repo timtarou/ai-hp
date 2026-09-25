@@ -17,6 +17,20 @@ Claude Code と Codex の両方で使えるスキルです（ターミナルか�
 | 10/1(木) 08:00（あと5日16時間） | Claude | a@example.com（team · .claude-a-team） | ██████████ 100% | Fable 100% | 5時間 100%（未開始） | — |
 ```
 
+## 使い方
+
+| 使う場所 | 最初に 1 回だけ（インストール） | 実行するコマンド |
+|---|---|---|
+| **Claude Code** | `/plugin marketplace add timtarou/ai-hp`<br>`/plugin install ai-hp@ai-hp` | `/ai-hp:ai-hp` |
+| **Codex** | Codex に次のように頼む:<br>`$skill-installer install https://github.com/timtarou/ai-hp/tree/main/skills/ai-hp into ~/.agents/skills` | `$ai-hp` |
+| **ターミナル** | `git clone https://github.com/timtarou/ai-hp.git`<br>`cd ai-hp` | `npm start` |
+
+- Claude Code と Codex では、コマンドの代わりに「利用枠を見せて」と頼んでも動きます
+- **英語 / 日本語の切り替え**：Claude Code や Codex では「英語で」「日本語で」と頼みます。ターミナルでは `npm start -- --lang en`（または `ja`）。指定しなければ OS の言語設定に従います
+- **ひとことを消す**：「ひとことなしで」と頼むか、`npm start -- --no-comment`
+- clone して `npm run install-skills` で入れた場合（下記）は、Claude Code では `/ai-hp`、Codex では `$ai-hp` で呼びます
+- **Node.js 18 以上**が必要です（依存パッケージはありません）。対象にしたい `claude` / `codex` の CLI も必要です
+
 ## 表示する内容
 
 - **週間 リセット**：各アカウントの週間枠がいつリセットされるかと、それまでの残り時間。Claude と Codex をまたいで、この順に並べます
@@ -28,9 +42,7 @@ Claude Code と Codex の両方で使えるスキルです（ターミナルか�
 - 今回取得できなかったアカウントは、前回の値に〔○時点〕を付けて表示します
 - **💬 ひとこと**：表の下に、数字に合わせたゲーム・アニメ風の一言を出します。1日以内にリセットされるのに枠が余っていれば「宝箱を開けずにダンジョンを出る気か？ 急いでぶん回せ！」、赤ゲージなら「作戦は『いのちだいじに』で」、Banked reset の失効が近ければ「ラストエリクサーは使ってこそ」、どれもほぼ枠がなければ課金のすすめ、など。スキルとして呼ぶと、Claude や Codex がその時のミームで一言を足します。`--no-comment` で消せます
 
-## インストール
-
-**Node.js 18 以上**が必要です（依存パッケージはありません）。対象にしたい `claude` / `codex` の CLI も必要です。
+## インストールの詳細
 
 ### Claude Code（プラグイン）
 
@@ -39,7 +51,11 @@ Claude Code と Codex の両方で使えるスキルです（ターミナルか�
 /plugin install ai-hp@ai-hp
 ```
 
-`/ai-hp:ai-hp` で呼ぶか、「利用枠はあとどれくらい？」と聞いてください。
+実行するコマンド:
+
+```
+/ai-hp:ai-hp
+```
 
 ### Codex
 
@@ -49,7 +65,13 @@ Codex に次のように頼みます。
 $skill-installer install https://github.com/timtarou/ai-hp/tree/main/skills/ai-hp into ~/.agents/skills
 ```
 
-`~/.agents/skills` は `CODEX_HOME` を分けた全アカウントから読まれるので、1 回入れれば全アカウントで使えます。`$ai-hp` で呼びます。ネットワークと CLI のログイン情報を使うため、Codex はサンドボックス外で実行します。承認を求められたら許可してください。
+`~/.agents/skills` は `CODEX_HOME` を分けた全アカウントから読まれるので、1 回入れれば全アカウントで使えます。Codex を起動し直してから、次で実行します。
+
+```
+$ai-hp
+```
+
+ネットワークと CLI のログイン情報を使うため、Codex はサンドボックス外で実行します。承認を求められたら許可してください。
 
 ### リポジトリを clone して使う（両ツール共通・`git pull` で更新）
 
@@ -57,7 +79,14 @@ $skill-installer install https://github.com/timtarou/ai-hp/tree/main/skills/ai-h
 git clone https://github.com/timtarou/ai-hp.git
 cd ai-hp
 npm run install-skills     # ~/.claude/skills と ~/.agents/skills にスキルへのリンクを張る
-npm run quota              # ターミナルから直接実行
+```
+
+実行するコマンド:
+
+```
+npm start                  # ターミナル（設定の例: npm start -- --lang en --no-comment）
+/ai-hp                     # Claude Code
+$ai-hp                     # Codex
 ```
 
 ## 複数アカウント
@@ -87,7 +116,8 @@ sh skills/ai-hp/scripts/add-codex-account.sh work
 ## 設定
 
 ```
-node skills/ai-hp/dist/cli.js [--lang en|ja] [--no-comment] [--debug]
+npm start -- [--lang en|ja] [--no-comment] [--debug]
+node skills/ai-hp/dist/cli.js [--lang en|ja] [--no-comment] [--debug]   # same, without npm
 ```
 
 | 設定 | 引数 | 環境変数 | `config.json` | 既定 |

@@ -17,6 +17,20 @@ A skill for both Claude Code and Codex (and a plain command). It asks each CLI's
 | Thu 10/1 08:00 (in 5d 16h) | Claude | a@example.com (team · .claude-a-team) | ██████████ 100% | Fable 100% | 5h 100% (not started) | — |
 ```
 
+## Usage
+
+| Where | Install once | Run |
+|---|---|---|
+| **Claude Code** | `/plugin marketplace add timtarou/ai-hp`<br>`/plugin install ai-hp@ai-hp` | `/ai-hp:ai-hp` |
+| **Codex** | Ask Codex:<br>`$skill-installer install https://github.com/timtarou/ai-hp/tree/main/skills/ai-hp into ~/.agents/skills` | `$ai-hp` |
+| **Terminal** | `git clone https://github.com/timtarou/ai-hp.git`<br>`cd ai-hp` | `npm start` |
+
+- In Claude Code and Codex you can also just ask: *"How much of my usage limits is left?"*
+- **English or Japanese:** ask "in English" / "in Japanese" in Claude Code or Codex, or run `npm start -- --lang en` (or `ja`) in the terminal. Without it, your OS language is used.
+- **No jokes:** ask for it without comments, or run `npm start -- --no-comment`.
+- If you installed from a clone with `npm run install-skills` (below), the commands are `/ai-hp` in Claude Code and `$ai-hp` in Codex.
+- Requires **Node.js 18+** (no dependencies) and the `claude` and/or `codex` CLIs you want to cover.
+
 ## What it shows
 
 - **Weekly reset** — when each account's weekly limit resets, and how long until then. Rows are sorted by this, across Claude and Codex.
@@ -28,9 +42,7 @@ A skill for both Claude Code and Codex (and a plain command). It asks each CLI's
 - Accounts that could not be read this time show their last values, marked *as of …*.
 - **💬 One-liners** under the table react to the numbers with game and anime flavor: burn quota that resets within a day ("Don't leave the dungeon with unopened chests!"), save an account in the red ("Tactics: don't use MP"), use a banked reset before it expires ("The Last Elixir is meant to be used"), or buy extra usage when everything is nearly empty. When run as a skill, Claude or Codex adds one more line with a timely meme. Turn them off with `--no-comment`.
 
-## Install
-
-Requires **Node.js 18+** (no dependencies) and the `claude` and/or `codex` CLIs you want to cover.
+## Install in detail
 
 ### Claude Code (plugin)
 
@@ -39,7 +51,11 @@ Requires **Node.js 18+** (no dependencies) and the `claude` and/or `codex` CLIs 
 /plugin install ai-hp@ai-hp
 ```
 
-Then run `/ai-hp:ai-hp`, or just ask "how much of my usage limits is left?".
+Run it:
+
+```
+/ai-hp:ai-hp
+```
 
 ### Codex
 
@@ -49,7 +65,13 @@ Ask Codex:
 $skill-installer install https://github.com/timtarou/ai-hp/tree/main/skills/ai-hp into ~/.agents/skills
 ```
 
-`~/.agents/skills` is read by every `CODEX_HOME`, so one install covers all your Codex accounts. Then run `$ai-hp`. Codex runs it outside the sandbox (it needs the network and your CLI logins), so approve that when asked.
+`~/.agents/skills` is read by every `CODEX_HOME`, so one install covers all your Codex accounts. Restart Codex, then run it:
+
+```
+$ai-hp
+```
+
+Codex runs it outside the sandbox (it needs the network and your CLI logins), so approve that when asked.
 
 ### From a clone (both tools, updates with `git pull`)
 
@@ -57,7 +79,14 @@ $skill-installer install https://github.com/timtarou/ai-hp/tree/main/skills/ai-h
 git clone https://github.com/timtarou/ai-hp.git
 cd ai-hp
 npm run install-skills     # symlinks the skill into ~/.claude/skills and ~/.agents/skills
-npm run quota              # or run it directly in your terminal
+```
+
+Run it:
+
+```
+npm start                  # in the terminal (options: npm start -- --lang en --no-comment)
+/ai-hp                     # in Claude Code
+$ai-hp                     # in Codex
 ```
 
 ## Multiple accounts
@@ -87,7 +116,8 @@ sh skills/ai-hp/scripts/add-codex-account.sh work
 ## Options
 
 ```
-node skills/ai-hp/dist/cli.js [--lang en|ja] [--no-comment] [--debug]
+npm start -- [--lang en|ja] [--no-comment] [--debug]
+node skills/ai-hp/dist/cli.js [--lang en|ja] [--no-comment] [--debug]   # same, without npm
 ```
 
 | Setting | Command line | Environment | `config.json` | Default |
