@@ -44,6 +44,31 @@ describe("dist（スキルが実行する JavaScript。Node 18 以上で動く�
 
   it("dist/cli.js を実行できる", () => {
     const help = execFileSync(process.execPath, [path.join(dist, "cli.js"), "--help"], { encoding: "utf8" });
-    assert.match(help, /^Usage: node dist\/cli\.js \[--lang en\|ja\]/m);
+    assert.match(help, /^ {2}ai-hp \[--lang en\|ja\] \[--markdown\]/m);
+    assert.match(help, /^ {2}ai-hp add-claude <name> \[email\]/m);
+  });
+
+  it("npx ai-hp で実行できるよう、dist/cli.js の先頭に shebang がある", () => {
+    assert.match(readFileSync(path.join(dist, "cli.js"), "utf8"), /^#!\/usr\/bin\/env node\n/);
+  });
+});
+
+describe("公開するパッケージ", () => {
+  const readJson = (file: string) => JSON.parse(readFileSync(path.join(root, file), "utf8"));
+
+  it("--version・package.json・Claude Code プラグインの version がそろっている", () => {
+    const version = execFileSync(process.execPath, [path.join(dist, "cli.js"), "--version"], { encoding: "utf8" }).trim();
+    assert.equal(version, readJson("package.json").version);
+    assert.equal(version, readJson(".claude-plugin/plugin.json").version);
+  });
+
+  it("npm パッケージには実行に要るファイルだけを入れる", () => {
+    const [pack] = JSON.parse(execFileSync("npm", ["pack", "--dry-run", "--json"], { cwd: root, encoding: "utf8" }));
+    const files = (pack.files as { path: string }[]).map((f) => f.path).sort();
+    const bin = readJson("package.json").bin["ai-hp"];
+    for (const needed of [bin, "skills/ai-hp/dist/terminal.js", "skills/ai-hp/scripts/add-claude-account.sh", "skills/ai-hp/scripts/add-codex-account.sh", "LICENSE", "README.md"]) {
+      assert.ok(files.includes(needed), `${needed} が入っていない`);
+    }
+    for (const file of files) assert.doesNotMatch(file, /^(test|scripts)\/|\.ts$/, `${file} は入れない`);
   });
 });

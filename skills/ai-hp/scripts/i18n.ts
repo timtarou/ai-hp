@@ -43,8 +43,8 @@ const messages = {
   startsFrom: { en: "from {time}", ja: "{time} から" },
   paused: { en: "paused", ja: "一時停止中" },
   noteStale: {
-    en: "Rows marked 〔as of …〕 show the last values for accounts that could not be fetched this time. Log other Claude accounts into a query-only folder to keep them current (scripts/add-claude-account.sh).",
-    ja: "〔○時点〕の行は今回取得できなかったアカウントの前回値です。Claude の別アカウントは、問い合わせ専用フォルダに一度ログインしておくと毎回最新値になります（scripts/add-claude-account.sh）。",
+    en: "Rows marked 〔as of …〕 show the last values for accounts that could not be fetched this time. Log other Claude accounts into a query-only folder to keep them current (`npx ai-hp add-claude <name>`).",
+    ja: "〔○時点〕の行は今回取得できなかったアカウントの前回値です。Claude の別アカウントは、問い合わせ専用フォルダに一度ログインしておくと毎回最新値になります（`npx ai-hp add-claude <名前>`）。",
   },
   noteNotFetched: {
     en: "Banked resets marked “not fetched” could not be read this time (see “Failed” below).",

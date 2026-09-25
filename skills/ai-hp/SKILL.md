@@ -8,11 +8,11 @@ description: Show weekly usage limits, reset times, Claude's model-specific week
 Run `dist/cli.js` in this skill's directory with Node.js 18+ and show its Markdown output to the user as-is.
 
 ```bash
-node <this skill's directory>/dist/cli.js --lang en   # English
-node <this skill's directory>/dist/cli.js --lang ja   # 日本語
+node <this skill's directory>/dist/cli.js --markdown --lang en   # English
+node <this skill's directory>/dist/cli.js --markdown --lang ja   # 日本語
 ```
 
-Pass `--lang` matching the language the user is writing in.
+Pass `--lang` matching the language the user is writing in. Always pass `--markdown` (without it, a terminal gets a colored table instead).
 
 ## Running it
 

@@ -6,9 +6,12 @@
 #   Example: sh add-codex-account.sh work
 set -eu
 
+# How the user ran this, for the messages below (`ai-hp add-codex` sets it)
+self="${AI_HP_SELF:-sh add-codex-account.sh}"
+
 name="${1:-}"
 if [ -z "$name" ]; then
-  echo "Usage: sh add-codex-account.sh <name>   (logs in to ~/.codex-<name>)" >&2
+  echo "Usage: $self <name>   (logs in to ~/.codex-<name>)" >&2
   exit 2
 fi
 case "$name" in

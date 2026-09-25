@@ -11,5 +11,5 @@
     "skipLibCheck": true,
     "types": ["node"]
   },
-  "include": ["skills", "test"]
+  "include": ["skills", "test", "scripts"]
 }

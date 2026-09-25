@@ -7,9 +7,12 @@
 #   Example: sh add-claude-account.sh alex-personal alex@example.com
 set -eu
 
+# How the user ran this, for the messages below (`ai-hp add-claude` sets it)
+self="${AI_HP_SELF:-sh add-claude-account.sh}"
+
 name="${1:-}"
 if [ -z "$name" ]; then
-  echo "Usage: sh add-claude-account.sh <name> [email]" >&2
+  echo "Usage: $self <name> [email]" >&2
   exit 2
 fi
 case "$name" in
@@ -26,7 +29,7 @@ mkdir -p "$dir"
 if CLAUDE_CONFIG_DIR="$dir" claude auth status 2>/dev/null | grep -q '"loggedIn": true'; then
   echo "$dir is already logged in:" >&2
   CLAUDE_CONFIG_DIR="$dir" claude auth status 2>/dev/null | grep -E '"(email|orgName|subscriptionType)"' >&2 || true
-  echo "Add another account (including the personal/Team plan of the same email) under another name, e.g. sh add-claude-account.sh ${name}-personal" >&2
+  echo "Add another account (including the personal/Team plan of the same email) under another name, e.g. $self ${name}-personal" >&2
   echo "To replace this login, run CLAUDE_CONFIG_DIR=$dir claude auth logout first." >&2
   exit 1
 fi

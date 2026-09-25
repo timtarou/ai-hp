@@ -1,10 +1,37 @@
 {
   "name": "ai-hp",
-  "version": "0.3.0",
-  "private": true,
-  "description": "Weekly usage limits, reset times and banked resets for all your Claude Code and Codex accounts, as a skill for both",
-  "type": "module",
+  "version": "0.4.0",
+  "description": "An HP bar for your AI accounts: weekly usage limits, reset times and banked resets for all your Claude Code and Codex accounts, in one table",
+  "keywords": [
+    "claude",
+    "claude-code",
+    "codex",
+    "openai-codex",
+    "usage-limits",
+    "rate-limits",
+    "quota",
+    "multi-account",
+    "agent-skills",
+    "cli"
+  ],
+  "homepage": "https://github.com/timtarou/ai-hp#readme",
+  "bugs": "https://github.com/timtarou/ai-hp/issues",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/timtarou/ai-hp.git"
+  },
   "license": "MIT",
+  "author": "timtarou (https://github.com/timtarou)",
+  "type": "module",
+  "bin": {
+    "ai-hp": "skills/ai-hp/dist/cli.js"
+  },
+  "files": [
+    "skills/ai-hp/dist",
+    "skills/ai-hp/scripts/*.sh",
+    "skills/ai-hp/SKILL.md",
+    "skills/ai-hp/package.json"
+  ],
   "engines": {
     "node": ">=18"
   },
@@ -15,7 +42,9 @@
     "add-claude": "sh skills/ai-hp/scripts/add-claude-account.sh",
     "add-codex": "sh skills/ai-hp/scripts/add-codex-account.sh",
     "test": "node --test test/*.test.ts",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "demo": "node scripts/demo.ts",
+    "prepublishOnly": "npm run typecheck && npm test"
   },
   "devDependencies": {
     "@types/node": "^24.0.0",

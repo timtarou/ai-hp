@@ -155,24 +155,27 @@ function compare(a: [number, number, string], b: [number, number, string]): numb
   return a[0] - b[0] || a[1] - b[1] || a[2].localeCompare(b[2]);
 }
 
-/** 取得結果を Markdown の表にする。1 アカウント 1 行で、Fable 等の別枠と短期枠は専用の列に出す */
-export function renderReport(input: ReportInput): string {
+/** 表の中身。Markdown（renderReport）とターミナル（terminal.ts）が同じものを描く */
+export type ReportModel = {
+  title: string;
+  headers: string[];
+  /** 1 アカウント 1 行。残りが少ない値は **…** で囲む */
+  rows: string[][];
+  comment?: string;
+  notes: string[];
+};
+
+/** 取得結果を表の中身にする。1 アカウント 1 行で、Fable 等の別枠と短期枠は専用の列に出す */
+export function buildReport(input: ReportInput): ReportModel {
   const { now, timeZone } = input;
-  const rows = [
+  const entries = [
     ...input.fresh.map((s) => ({ s, stale: false })),
     ...input.cached.map((s) => ({ s, stale: true })),
   ].sort((a, b) => compare(sortKey(a.s, now), sortKey(b.s, now)));
 
-  const headers = [t("hReset"), t("hService"), t("hAccount"), t("hWeekly"), t("hScoped"), t("hShort"), t("hBanked")];
-  const lines = [
-    `### ${t("title", { time: formatFullDateTime(now, timeZone), host: input.host })}`,
-    "",
-    `| ${headers.join(" | ")} |`,
-    `|${headers.map(() => "---").join("|")}|`,
-  ];
-  for (const { s, stale } of rows) {
+  const rows = entries.map(({ s, stale }) => {
     const weekly = s.limits.find((l) => l.kind === "weekly");
-    const cells = [
+    return [
       weekly ? resetText(weekly, now, timeZone) : "—",
       PROVIDER_NAME[s.provider],
       accountCell(s, stale, timeZone),
@@ -181,17 +184,36 @@ export function renderReport(input: ReportInput): string {
       shortTermCell(s, stale, now, timeZone),
       creditsCell(s, now, timeZone),
     ];
-    lines.push(`| ${cells.join(" | ")} |`);
-  }
-  if (rows.length === 0) lines.push(`| — | — | ${t("noAccounts")} | | | | |`);
-  if (input.comment) lines.push("", `> 💬 ${input.comment}`);
+  });
 
   const notes: string[] = [];
   if (input.cached.length > 0) notes.push(t("noteStale"));
-  if (rows.some((r) => !r.s.resetCredits && !r.s.resetCreditsOff)) notes.push(t("noteNotFetched"));
-  if (rows.some((r) => r.s.resetCreditsOff)) notes.push(t("noteBankedOff"));
+  if (entries.some((r) => !r.s.resetCredits && !r.s.resetCreditsOff)) notes.push(t("noteNotFetched"));
+  if (entries.some((r) => r.s.resetCreditsOff)) notes.push(t("noteBankedOff"));
   if (input.excluded.length > 0) notes.push(t("noteExcluded", { list: input.excluded.join(getLang() === "ja" ? "、" : ", ") }));
   for (const p of input.problems) notes.push(t("noteFailed", { detail: p }));
-  if (notes.length > 0) lines.push("", ...notes.map((n) => `- ${n}`));
+
+  return {
+    title: t("title", { time: formatFullDateTime(now, timeZone), host: input.host }),
+    headers: [t("hReset"), t("hService"), t("hAccount"), t("hWeekly"), t("hScoped"), t("hShort"), t("hBanked")],
+    rows,
+    comment: input.comment,
+    notes,
+  };
+}
+
+/** 表の中身を Markdown にする（スキルとして動くとき、出力先がターミナルでないとき） */
+export function renderMarkdown(model: ReportModel): string {
+  const { headers } = model;
+  const lines = [`### ${model.title}`, "", `| ${headers.join(" | ")} |`, `|${headers.map(() => "---").join("|")}|`];
+  for (const cells of model.rows) lines.push(`| ${cells.join(" | ")} |`);
+  if (model.rows.length === 0) lines.push(`| — | — | ${t("noAccounts")} | | | | |`);
+  if (model.comment) lines.push("", `> 💬 ${model.comment}`);
+  if (model.notes.length > 0) lines.push("", ...model.notes.map((n) => `- ${n}`));
   return lines.join("\n");
+}
+
+/** 取得結果を Markdown の表にする */
+export function renderReport(input: ReportInput): string {
+  return renderMarkdown(buildReport(input));
 }

@@ -1,27 +1,65 @@
+#!/usr/bin/env node
+import { spawnSync } from "node:child_process";
 import { mkdir } from "node:fs/promises";
 import { hostname, tmpdir } from "node:os";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { loadCache, pickCachedOnly, saveCache } from "./cache.ts";
 import { collectClaude } from "./collect/claude.ts";
 import { oneLiner } from "./commentary.ts";
 import { collectCodex } from "./collect/codex.ts";
 import { detectSources, findExecutable } from "./detect.ts";
 import { getLang, setLang, t } from "./i18n.ts";
-import { renderReport } from "./report.ts";
+import { buildReport, renderMarkdown } from "./report.ts";
 import { configDir, loadSettings, setDebug } from "./settings.ts";
+import { renderTerminal } from "./terminal.ts";
 import type { Skipped, Snapshot } from "./types.ts";
 
-const HELP = `ai-hp — weekly usage limits, reset times and banked resets for all your Claude Code and Codex accounts
+/** package.json と .claude-plugin/plugin.json の version と揃える（test/build.test.ts が検査する） */
+const VERSION = "0.4.0";
 
-Usage: node dist/cli.js [--lang en|ja] [--no-comment] [--debug]
+const HELP = `ai-hp ${VERSION} — an HP bar for your AI accounts: weekly usage limits, reset times and banked resets for all your Claude Code and Codex accounts
+
+Usage:
+  ai-hp [--lang en|ja] [--markdown] [--no-color] [--no-comment] [--debug]
+  ai-hp add-claude <name> [email]   log another Claude account into ~/.claude-<name> (query-only)
+  ai-hp add-codex <name>            log another Codex account into ~/.codex-<name>
 
   --lang en|ja   output language (default: AI_HP_LANG, config.json, or your OS locale)
+  --markdown     print a Markdown table (the default when the output is not a terminal)
+  --no-color     no colors in the terminal table (also NO_COLOR=1)
   --no-comment   leave out the one-liner after the table
   --debug        print the raw server responses to stderr (no tokens) for bug reports
+  --version      print the version
 
 Settings file: ${path.join(configDir(), "config.json")}
   { "lang": "en", "timeZone": "Asia/Tokyo", "commentary": true }
-Environment: AI_HP_LANG, AI_HP_TZ, AI_HP_COMMENTARY, AI_HP_CLAUDE_DIRS, AI_HP_CODEX_HOMES, AI_HP_DEBUG`;
+Environment: AI_HP_LANG, AI_HP_TZ, AI_HP_COMMENTARY, AI_HP_CLAUDE_DIRS, AI_HP_CODEX_HOMES, AI_HP_DEBUG, NO_COLOR, FORCE_COLOR`;
+
+/** アカウント追加のサブコマンド。スキルに同梱のシェルスクリプトを実行する */
+const ACCOUNT_SCRIPTS: Record<string, string> = {
+  "add-claude": "add-claude-account.sh",
+  "add-codex": "add-codex-account.sh",
+};
+
+function runAccountScript(command: string, args: string[]): number {
+  // dist/cli.js からも scripts/cli.ts からも、スキルの scripts フォルダを指す
+  const file = path.join(path.dirname(fileURLToPath(import.meta.url)), "..", "scripts", ACCOUNT_SCRIPTS[command]);
+  const env = { ...process.env, AI_HP_SELF: `ai-hp ${command}` }; // スクリプトの案内に出すコマンド名
+  const r = spawnSync("sh", [file, ...args], { stdio: "inherit", env });
+  if (r.error) {
+    console.error(`${r.error.message}\nAdding accounts needs a POSIX shell (macOS, Linux or WSL).`);
+    return 1;
+  }
+  return r.status ?? 1;
+}
+
+/** NO_COLOR（https://no-color.org）と FORCE_COLOR に従う。どちらも無ければターミナルのときだけ色を付ける */
+function useColor(argv: string[], env: NodeJS.ProcessEnv): boolean {
+  if (argv.includes("--no-color") || (env.NO_COLOR ?? "") !== "") return false;
+  if (env.FORCE_COLOR !== undefined) return env.FORCE_COLOR !== "0";
+  return !!process.stdout.isTTY;
+}
 
 function describe(e: unknown): string {
   return e instanceof Error ? e.message : String(e);
@@ -48,6 +86,11 @@ async function main(argv: string[]): Promise<number> {
     console.log(HELP);
     return 0;
   }
+  if (argv.includes("--version") || argv.includes("-v")) {
+    console.log(VERSION);
+    return 0;
+  }
+  if (argv[0] && Object.hasOwn(ACCOUNT_SCRIPTS, argv[0])) return runAccountScript(argv[0], argv.slice(1));
   const settings = await loadSettings(argv);
   setLang(settings.lang);
   setDebug(settings.debug);
@@ -101,17 +144,22 @@ async function main(argv: string[]): Promise<number> {
     problems.push(t("cacheSaveFailed", { detail: describe(e) }));
   }
 
+  const model = buildReport({
+    fresh,
+    cached,
+    excluded,
+    problems,
+    now,
+    host: hostname().replace(/\.local$/, ""),
+    timeZone: settings.timeZone,
+    comment: settings.commentary ? oneLiner(fresh, now) : undefined,
+  });
+  // スキル（Claude Code / Codex）から呼ばれたときやパイプの先は Markdown、人がターミナルで見るときは色付きの表
+  const markdown = argv.includes("--markdown") || !process.stdout.isTTY;
   console.log(
-    renderReport({
-      fresh,
-      cached,
-      excluded,
-      problems,
-      now,
-      host: hostname().replace(/\.local$/, ""),
-      timeZone: settings.timeZone,
-      comment: settings.commentary ? oneLiner(fresh, now) : undefined,
-    }),
+    markdown
+      ? renderMarkdown(model)
+      : renderTerminal(model, { columns: process.stdout.columns || 120, color: useColor(argv, process.env) }),
   );
   return fresh.length === 0 && problems.length > 0 ? 1 : 0;
 }
