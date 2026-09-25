@@ -1,0 +1,14 @@
+{
+  "name": "ai-hp",
+  "description": "ai-hp: usage limits for all your Claude Code and Codex accounts",
+  "owner": {
+    "name": "timtarou"
+  },
+  "plugins": [
+    {
+      "name": "ai-hp",
+      "source": "./",
+      "description": "Weekly usage limits, reset times, model-specific limits (Fable) and banked resets for all your Claude Code and Codex accounts, soonest reset first"
+    }
+  ]
+}

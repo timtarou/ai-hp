@@ -1,0 +1,23 @@
+{
+  "name": "ai-hp",
+  "version": "0.3.0",
+  "private": true,
+  "description": "Weekly usage limits, reset times and banked resets for all your Claude Code and Codex accounts, as a skill for both",
+  "type": "module",
+  "license": "MIT",
+  "engines": {
+    "node": ">=22.18"
+  },
+  "scripts": {
+    "quota": "node skills/ai-hp/scripts/cli.ts",
+    "install-skills": "sh scripts/install-skills.sh",
+    "add-claude": "sh skills/ai-hp/scripts/add-claude-account.sh",
+    "add-codex": "sh skills/ai-hp/scripts/add-codex-account.sh",
+    "test": "node --test test/*.test.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "typescript": "^5.9.0"
+  }
+}
