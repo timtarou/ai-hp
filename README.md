@@ -26,6 +26,7 @@ A skill for both Claude Code and Codex (and a plain command). It asks each CLI's
 - **Banked resets** — resets you have in reserve, with their expiry (Codex). Claude Code does not expose Claude’s banked resets, so Claude rows show “—”.
 - The same email with a **personal and a Team plan** shows as two rows, because they have separate limits.
 - Accounts that could not be read this time show their last values, marked *as of …*.
+- **💬 One-liners** under the table react to the numbers with game and anime flavor: burn quota that resets within a day ("Don't leave the dungeon with unopened chests!"), save an account in the red ("Tactics: don't use MP"), use a banked reset before it expires ("The Last Elixir is meant to be used"), or buy extra usage when everything is nearly empty. When run as a skill, Claude or Codex adds one more line with a timely meme. Turn them off with `--no-comment`.
 
 ## Install
 
@@ -86,13 +87,14 @@ sh skills/ai-hp/scripts/add-codex-account.sh work
 ## Options
 
 ```
-node skills/ai-hp/scripts/cli.ts [--lang en|ja] [--debug]
+node skills/ai-hp/scripts/cli.ts [--lang en|ja] [--no-comment] [--debug]
 ```
 
 | Setting | Command line | Environment | `config.json` | Default |
 |---|---|---|---|---|
 | Language | `--lang en\|ja` | `AI_HP_LANG` | `"lang"` | your OS locale |
 | Time zone | | `AI_HP_TZ` | `"timeZone"` | your OS time zone |
+| One-liners after the table | `--no-comment` to hide | `AI_HP_COMMENTARY=0` | `"commentary": false` | on |
 | Raw responses to stderr | `--debug` | `AI_HP_DEBUG=1` | | off |
 | Folders to read | | `AI_HP_CLAUDE_DIRS`, `AI_HP_CODEX_HOMES` | | auto-detected |
 

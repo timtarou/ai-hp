@@ -3,6 +3,7 @@ import { hostname, tmpdir } from "node:os";
 import path from "node:path";
 import { loadCache, pickCachedOnly, saveCache } from "./cache.ts";
 import { collectClaude } from "./collect/claude.ts";
+import { commentary } from "./commentary.ts";
 import { collectCodex } from "./collect/codex.ts";
 import { detectSources, findExecutable } from "./detect.ts";
 import { getLang, setLang, t } from "./i18n.ts";
@@ -12,14 +13,15 @@ import type { Skipped, Snapshot } from "./types.ts";
 
 const HELP = `ai-hp — weekly usage limits, reset times and banked resets for all your Claude Code and Codex accounts
 
-Usage: node cli.ts [--lang en|ja] [--debug]
+Usage: node cli.ts [--lang en|ja] [--no-comment] [--debug]
 
   --lang en|ja   output language (default: AI_HP_LANG, config.json, or your OS locale)
+  --no-comment   leave out the witty one-liners after the table
   --debug        print the raw server responses to stderr (no tokens) for bug reports
 
 Settings file: ${path.join(configDir(), "config.json")}
-  { "lang": "en", "timeZone": "Asia/Tokyo" }
-Environment: AI_HP_LANG, AI_HP_TZ, AI_HP_CLAUDE_DIRS, AI_HP_CODEX_HOMES, AI_HP_DEBUG`;
+  { "lang": "en", "timeZone": "Asia/Tokyo", "commentary": true }
+Environment: AI_HP_LANG, AI_HP_TZ, AI_HP_COMMENTARY, AI_HP_CLAUDE_DIRS, AI_HP_CODEX_HOMES, AI_HP_DEBUG`;
 
 function describe(e: unknown): string {
   return e instanceof Error ? e.message : String(e);
@@ -108,6 +110,7 @@ async function main(argv: string[]): Promise<number> {
       now,
       host: hostname().replace(/\.local$/, ""),
       timeZone: settings.timeZone,
+      comments: settings.commentary ? commentary(fresh, now) : [],
     }),
   );
   return fresh.length === 0 && problems.length > 0 ? 1 : 0;

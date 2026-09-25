@@ -26,6 +26,7 @@ Claude Code と Codex の両方で使えるスキルです（ターミナルか�
 - **Banked reset**：取っておいたリセット権の数と失効日時（Codex）。Claude の Banked reset は Claude Code の窓口から取得できないため、Claude の行は「—」になります
 - 同じメールアドレスの**個人と Team** は利用枠が別なので、別の行になります
 - 今回取得できなかったアカウントは、前回の値に〔○時点〕を付けて表示します
+- **💬 ひとこと**：表の下に、数字に合わせたゲーム・アニメ風の一言を出します。1日以内にリセットされるのに枠が余っていれば「宝箱を開けずにダンジョンを出る気か？ 急いでぶん回せ！」、赤ゲージなら「作戦は『いのちだいじに』で」、Banked reset の失効が近ければ「ラストエリクサーは使ってこそ」、どれもほぼ枠がなければ課金のすすめ、など。スキルとして呼ぶと、Claude や Codex がその時のミームで一言を足します。`--no-comment` で消せます
 
 ## インストール
 
@@ -86,13 +87,14 @@ sh skills/ai-hp/scripts/add-codex-account.sh work
 ## 設定
 
 ```
-node skills/ai-hp/scripts/cli.ts [--lang en|ja] [--debug]
+node skills/ai-hp/scripts/cli.ts [--lang en|ja] [--no-comment] [--debug]
 ```
 
 | 設定 | 引数 | 環境変数 | `config.json` | 既定 |
 |---|---|---|---|---|
 | 表示言語 | `--lang en\|ja` | `AI_HP_LANG` | `"lang"` | OS の言語設定 |
 | タイムゾーン | | `AI_HP_TZ` | `"timeZone"` | OS のタイムゾーン |
+| 表のあとの「ひとこと」 | `--no-comment` で消す | `AI_HP_COMMENTARY=0` | `"commentary": false` | 表示 |
 | 生の応答を標準エラーに出す | `--debug` | `AI_HP_DEBUG=1` | | 無効 |
 | 読むフォルダ | | `AI_HP_CLAUDE_DIRS`, `AI_HP_CODEX_HOMES` | | 自動検出 |
 

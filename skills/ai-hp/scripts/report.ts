@@ -16,6 +16,8 @@ export type ReportInput = {
   /** 表示しなかったフォルダと理由（未ログイン等） */
   excluded: string[];
   problems: string[];
+  /** 表のあとに出す「ひとこと」（commentary.ts） */
+  comments?: string[];
   now: Date;
   host: string;
   timeZone: string;
@@ -182,6 +184,9 @@ export function renderReport(input: ReportInput): string {
     lines.push(`| ${cells.join(" | ")} |`);
   }
   if (rows.length === 0) lines.push(`| — | — | ${t("noAccounts")} | | | | |`);
+  if (input.comments && input.comments.length > 0) {
+    lines.push("", input.comments.map((c) => `> 💬 ${c}`).join("\n>\n"));
+  }
 
   const notes: string[] = [];
   if (input.cached.length > 0) notes.push(t("noteStale"));

@@ -22,9 +22,10 @@ Pass `--lang` matching the language the user is writing in.
 
 ## Showing the output
 
-- Paste the table as-is. Do not summarize, reorder, translate or drop columns (other weekly limits such as Fable, short-term limits, banked resets).
-- Add at most one or two lines after the table (for example, the account with the most room left, or a banked reset that expires soon).
+- Paste the output as-is, including the 💬 one-liners under the table. Do not summarize, reorder, translate or drop columns (other weekly limits such as Fable, short-term limits, banked resets).
+- Then add **one** witty line of your own in the user's language that reacts to what the table shows: burn quota that resets soon, save the account running low, use a banked reset before it expires, or buy extra usage when everything is nearly empty. Make it fun: a timely meme, a short anime catchphrase or a game reference (HP, MP, inns, revive items). Keep quotes to a few words, never mock anyone, and do not repeat what the 💬 lines already said.
 - If there are "Failed" lines, relay them verbatim. Never fill in values by guessing.
+- If the user asks for no jokes, run with `--no-comment` and skip your own line.
 
 ## Adding accounts
 

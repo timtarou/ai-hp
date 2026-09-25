@@ -8,6 +8,8 @@ import { isValidTimeZone, systemTimeZone } from "./time.ts";
 export type Settings = {
   lang: Lang;
   timeZone: string;
+  /** 表のあとに「ひとこと」を出すか */
+  commentary: boolean;
   debug: boolean;
 };
 
@@ -51,6 +53,7 @@ export async function loadSettings(argv: string[], env: NodeJS.ProcessEnv = proc
   return {
     lang,
     timeZone: tz ?? systemTimeZone(),
+    commentary: !argv.includes("--no-comment") && (flag(env.AI_HP_COMMENTARY) ?? file.commentary !== false),
     debug: argv.includes("--debug") || flag(env.AI_HP_DEBUG) === true,
   };
 }
