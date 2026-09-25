@@ -27,7 +27,7 @@ A skill for both Claude Code and Codex (and a plain command). It asks each CLI's
 
 - In Claude Code and Codex you can also just ask: *"How much of my usage limits is left?"*
 - **English or Japanese:** ask "in English" / "in Japanese" in Claude Code or Codex, or run `npm start -- --lang en` (or `ja`) in the terminal. Without it, your OS language is used.
-- **No jokes:** ask for it without comments, or run `npm start -- --no-comment`.
+- **Without the one-liners:** ask for it, or run `npm start -- --no-comment`.
 - If you installed from a clone with `npm run install-skills` (below), the commands are `/ai-hp` in Claude Code and `$ai-hp` in Codex.
 - Requires **Node.js 18+** (no dependencies) and the `claude` and/or `codex` CLIs you want to cover.
 
@@ -41,7 +41,7 @@ A skill for both Claude Code and Codex (and a plain command). It asks each CLI's
 - A plain **“—”** under *Other weekly* or *Short-term* means that account has no such limit.
 - The same email with a **personal and a Team plan** shows as two rows, because they have separate limits.
 - Accounts that could not be read this time show their last values, marked *as of …*.
-- **💬 One-liners** under the table react to the numbers with game and anime flavor: burn quota that resets within a day ("Don't leave the dungeon with unopened chests!"), save an account in the red ("Tactics: don't use MP"), use a banked reset before it expires ("The Last Elixir is meant to be used"), or buy extra usage when everything is nearly empty. When run as a skill, Claude or Codex adds one more line with a timely meme. Turn them off with `--no-comment`.
+- **💬 One-liners** under the table, and one more from Claude or Codex when run as a skill. Turn them off with `--no-comment`.
 
 ## Install in detail
 
