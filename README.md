@@ -68,8 +68,11 @@ When the output is not a terminal (the skill, a pipe, a file), ai-hp prints Mark
 
 ## How is this different from…
 
-- **`/usage` in Claude Code and `/status` in Codex.** They show the one account you are logged in to, in that tool. ai-hp lists every account on the machine, across both tools, sorted by the next reset, so you can tell which one to use now.
-- **Menu bar apps (such as CodexBar).** Great if you want a macOS menu bar. ai-hp is a command and a skill instead: it works in any terminal on macOS, Linux and WSL (including over SSH), your agent can read it, and it talks only to the `claude` and `codex` CLIs you already have.
+- **`/usage` in Claude Code and `/status` in Codex.** They show the one account you are logged in to, in that tool. ai-hp lists every account on the machine, across both tools, sorted by the next reset.
+- **[CodexBar](https://github.com/steipete/CodexBar).** If you want limits for many providers (Cursor, Gemini, Copilot and more) always visible in your menu bar, with notifications and cost tracking, use CodexBar; it does far more. ai-hp is deliberately narrower:
+  - It never reads tokens or cookies. It only asks the `claude` and `codex` CLIs through their own interfaces. CodexBar mainly reads OAuth tokens or browser cookies and calls the providers' APIs itself.
+  - Several Claude accounts work by logging each into its own config folder (`~/.claude-*`), with no extra tool. CodexBar reads several Claude subscriptions through claude-swap or tokens you paste into its config.
+  - Claude and Codex share one table sorted by the next weekly reset, and ai-hp is a Claude Code plugin and a Codex skill, so you can ask *"which account should I use next?"* inside the agent.
 - **Log analyzers (such as ccusage).** They estimate tokens and cost from local session logs. ai-hp shows what the servers say is left, and when it resets.
 
 ## Install in detail
