@@ -176,7 +176,7 @@ ai-hp add-codex <name>
 
 Both return the server's current values, so a forced or early reset shows up on the next run. Accounts are queried in parallel (a few seconds in total). ai-hp makes no network requests of its own and collects nothing: the CLIs talk to their own servers with their own logins, and ai-hp reads only the account email and IDs from each CLI's config to label and group the rows. Last values are kept in `~/Library/Caches/ai-hp` (macOS), `~/.cache/ai-hp` (Linux) or `%LOCALAPPDATA%\ai-hp` (Windows) and dropped after 14 days.
 
-npm releases are published from GitHub Actions with [trusted publishing](https://docs.npmjs.com/trusted-publishers/), so each version on npm carries a provenance attestation that links it to the commit it was built from.
+npm releases are published from GitHub Actions with [trusted publishing](https://docs.npmjs.com/trusted-publishers/): no npm token is stored anywhere, and each version published this way carries a provenance attestation, shown on npm, that links it to the commit it was built from.
 
 ### Claude's banked resets (not shown)
 

@@ -22,5 +22,16 @@ jobs:
           package-manager-cache: false
       - name: The release tag matches package.json
         run: test "v$(node -p 'require("./package.json").version')" = "$GITHUB_REF_NAME"
-      - run: npm ci
-      - run: npm publish
+      # The first version was published by hand (npm needs a package to exist before a trusted publisher
+      # can be set up), so a release for a version that is already on npm is skipped instead of failing.
+      - name: Skip if this version is already on npm
+        id: check
+        run: |
+          if npm view "ai-hp@${GITHUB_REF_NAME#v}" version >/dev/null 2>&1; then
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            echo "::notice::ai-hp@${GITHUB_REF_NAME#v} is already on npm; nothing to publish"
+          fi
+      - if: steps.check.outputs.skip != 'true'
+        run: npm ci
+      - if: steps.check.outputs.skip != 'true'
+        run: npm publish

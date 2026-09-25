@@ -176,7 +176,7 @@ ai-hp add-codex <名前>
 
 どちらもサーバーの現在値を返すので、強制リセットなどでリセット日時が変わっても次の実行で反映されます。各アカウントには並行して問い合わせます（全体で数秒）。ai-hp 自身はネットワークに接続せず、何も収集しません。サーバーとやり取りするのは各 CLI で、ai-hp が CLI の設定から読むのは、行の見出しとまとめに使うメールアドレスと ID だけです。前回値は `~/Library/Caches/ai-hp`（macOS）、`~/.cache/ai-hp`（Linux）、`%LOCALAPPDATA%\ai-hp`（Windows）に残し、14 日で捨てます。
 
-npm への公開は GitHub Actions の [trusted publishing](https://docs.npmjs.com/trusted-publishers/) で行うので、npm の各バージョンには、どのコミットから作られたかを示す provenance が付きます。
+npm への公開は GitHub Actions の [trusted publishing](https://docs.npmjs.com/trusted-publishers/) で行います。npm のトークンはどこにも保存せず、この方法で公開したバージョンには、どのコミットから作られたかを示す provenance が npm 上に付きます。
 
 ### Claude の Banked reset（表示しない理由）
 
