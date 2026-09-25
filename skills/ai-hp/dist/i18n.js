@@ -49,9 +49,10 @@ const messages = {
         ja: "Banked reset の「未取得」は、今回その情報を取れなかったアカウントです（理由は「取得に失敗」）。",
     },
     noteBankedOff: {
-        en: "Claude’s banked resets are not shown: Claude Code does not expose them through its interfaces.",
-        ja: "Claude の Banked reset は、Claude Code の窓口から取得できないため表示しません。",
+        en: "“— (not supported)” under Banked resets means Claude Code does not expose Claude’s banked resets, so they cannot be shown. It does not mean zero (zero shows as “0”).",
+        ja: "Banked reset の「—（非対応）」は、Claude Code の窓口から取得できないため表示していないという意味です。0 件という意味ではありません（0 件のときは「0」と表示します）。",
     },
+    bankedUnsupported: { en: "— (not supported)", ja: "—（非対応）" },
     noteExcluded: { en: "Not shown: {list}", ja: "表示していないフォルダ: {list}" },
     noteFailed: { en: "Failed: {detail}", ja: "取得に失敗: {detail}" },
     // 残り時間

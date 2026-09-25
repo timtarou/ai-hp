@@ -94,7 +94,7 @@ function shortTitle(title) {
 }
 function creditsCell(s, now, timeZone) {
     if (s.resetCreditsOff)
-        return "—";
+        return t("bankedUnsupported"); // 0 件と区別できるよう「—」だけにしない
     if (!s.resetCredits)
         return t("bankedNotFetched");
     const { items, available, note } = s.resetCredits;

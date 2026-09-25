@@ -12,9 +12,9 @@ A skill for both Claude Code and Codex (and a plain command). It asks each CLI's
 | Weekly reset | Service | Account | Weekly left | Other weekly | Short-term | Banked resets |
 |---|---|---|---|---|---|---|
 | Sat 9/26 17:49 (in 1d 2h) | Codex | b@example.com (pro · .codex-work) | ░░░░░░░░░░ **0%** | — | — | 1 (expires Fri 10/23 06:01) |
-| Sun 9/27 04:59 (in 1d 13h) | Claude | a@example.com (max · .claude) | ████████░░ 80% | Fable 100% | 5h 59% (Fri 9/25 16:49) | — |
+| Sun 9/27 04:59 (in 1d 13h) | Claude | a@example.com (max · .claude) | ████████░░ 80% | Fable 100% | 5h 59% (Fri 9/25 16:49) | — (not supported) |
 | Wed 9/30 06:09 (in 4d 15h) | Codex | c@example.com (pro · .codex) | ██░░░░░░░░ **17%** | — | — | 0 |
-| Thu 10/1 08:00 (in 5d 16h) | Claude | a@example.com (team · .claude-a-team) | ██████████ 100% | Fable 100% | 5h 100% (not started) | — |
+| Thu 10/1 08:00 (in 5d 16h) | Claude | a@example.com (team · .claude-a-team) | ██████████ 100% | Fable 100% | 5h 100% (not started) | — (not supported) |
 ```
 
 ## Usage
@@ -37,7 +37,8 @@ A skill for both Claude Code and Codex (and a plain command). It asks each CLI's
 - **Weekly left** — a 10-cell bar plus the percentage left (bold under 20%).
 - **Other weekly** — model-specific weekly limits with their own budget, such as Claude's **Fable** limit.
 - **Short-term** — the 5-hour limit (Claude, and Codex plans that have one).
-- **Banked resets** — resets you have in reserve, with their expiry (Codex). Claude Code does not expose Claude’s banked resets, so Claude rows show “—” (see [Claude's banked resets](#claudes-banked-resets-not-shown)).
+- **Banked resets** — resets you have in reserve, with their expiry (Codex). Claude rows show **“— (not supported)”**: Claude Code does not expose Claude’s banked resets, so ai-hp cannot show them. **This does not mean zero** — zero shows as “0” (see [Claude's banked resets](#claudes-banked-resets-not-shown)).
+- A plain **“—”** under *Other weekly* or *Short-term* means that account has no such limit.
 - The same email with a **personal and a Team plan** shows as two rows, because they have separate limits.
 - Accounts that could not be read this time show their last values, marked *as of …*.
 - **💬 One-liners** under the table react to the numbers with game and anime flavor: burn quota that resets within a day ("Don't leave the dungeon with unopened chests!"), save an account in the red ("Tactics: don't use MP"), use a banked reset before it expires ("The Last Elixir is meant to be used"), or buy extra usage when everything is nearly empty. When run as a skill, Claude or Codex adds one more line with a timely meme. Turn them off with `--no-comment`.
@@ -141,7 +142,7 @@ Both return the server's current values, so a forced or early reset shows up on 
 
 ### Claude's banked resets (not shown)
 
-Claude's banked resets are not part of what Claude Code exposes to other tools (`get_usage`), so ai-hp shows "—" for them. There is a way to read them — calling the usage endpoint that Claude Code itself uses, with your Claude Code login credentials, while identifying as Claude Code — but ai-hp does not do this, and we don't recommend it:
+Claude's banked resets are not part of what Claude Code exposes to other tools (`get_usage`), so ai-hp shows “— (not supported)” for them (not zero). There is a way to read them — calling the usage endpoint that Claude Code itself uses, with your Claude Code login credentials, while identifying as Claude Code — but ai-hp does not do this, and we don't recommend it:
 
 - It uses your subscription credentials outside Claude Code and impersonates the official client. That may go against Anthropic's terms and put your account at risk.
 - The endpoint is not a public API and can change without notice.

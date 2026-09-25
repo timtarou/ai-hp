@@ -113,7 +113,7 @@ function shortTitle(title: string): string | undefined {
 }
 
 function creditsCell(s: Snapshot, now: Date, timeZone: string): string {
-  if (s.resetCreditsOff) return "—";
+  if (s.resetCreditsOff) return t("bankedUnsupported"); // 0 件と区別できるよう「—」だけにしない
   if (!s.resetCredits) return t("bankedNotFetched");
   const { items, available, note } = s.resetCredits;
   const usable = items.filter((i) => !i.expiresAt || i.expiresAt > now);

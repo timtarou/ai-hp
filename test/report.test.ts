@@ -142,11 +142,11 @@ describe("renderReport（日本語）", () => {
     assert.match(rowOf(render({ fresh: [ineligible] }), "a@example.com"), /\| 0（プラン対象外） \|$/);
   });
 
-  it("Claude の Banked reset は取得しないので「—」と注記を出す", () => {
+  it("Claude の Banked reset は取得しないので「—（非対応）」と注記を出し、0 件と区別する", () => {
     const off: Snapshot = { ...claude, resetCreditsOff: true };
     const out = render({ fresh: [off] });
-    assert.match(rowOf(out, "a@example.com"), /\| — \|$/);
-    assert.match(out, /Claude の Banked reset は、Claude Code の窓口から取得できないため表示しません/);
+    assert.match(rowOf(out, "a@example.com"), /\| —（非対応） \|$/);
+    assert.match(out, /「—（非対応）」は、Claude Code の窓口から取得できないため表示していないという意味です。0 件という意味ではありません/);
     assert.doesNotMatch(out, /「未取得」/);
   });
 
@@ -206,7 +206,8 @@ describe("renderReport（英語）", () => {
     };
     const out = render({ cached: [old], excluded: [".codex-x (not logged in)"] });
     assert.match(out, /〔as of Sat 9\/19 09:00〕 \| ██████████ 100% \(likely reset\) \|/);
-    assert.match(out, /- Claude’s banked resets are not shown/);
+    assert.match(out, /- “— \(not supported\)” under Banked resets means .* It does not mean zero/);
+    assert.match(rowOf(out, "a@example.com"), /\| — \(not supported\) \|$/);
     assert.match(out, /- Not shown: \.codex-x \(not logged in\)/);
   });
 });
