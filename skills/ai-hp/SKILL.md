@@ -1,6 +1,6 @@
 ---
 name: ai-hp
-description: Show weekly usage limits, reset times, Claude's model-specific weekly limits (e.g. Fable), short-term limits and banked resets for every Claude Code and Codex account on this machine, soonest weekly reset first. Use when the user asks about usage limits, remaining quota, when limits reset, which account to use next, or banked resets (利用枠、残り枠、使用量、リセットはいつ、Banked reset).
+description: Show weekly usage limits, reset times, Claude's model-specific weekly limits (e.g. Fable), short-term limits and banked resets for every Claude Code and Codex account on this machine, soonest weekly reset first. Use when the user asks about usage limits, remaining quota, when limits reset, which account to use next, banked resets, or their "AI HP" (利用枠、残り枠、使用量、リセットはいつ、Banked reset、AI の HP).
 ---
 
 # AI usage limits

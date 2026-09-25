@@ -19,13 +19,13 @@ A skill for both Claude Code and Codex (and a plain command). It asks each CLI's
 
 ## Usage
 
-| Where | Install once | Run |
-|---|---|---|
-| **Claude Code** | `/plugin marketplace add timtarou/ai-hp`<br>`/plugin install ai-hp@ai-hp` | `/ai-hp:ai-hp` |
-| **Codex** | Ask Codex:<br>`$skill-installer install https://github.com/timtarou/ai-hp/tree/main/skills/ai-hp into ~/.agents/skills` | `$ai-hp` |
-| **Terminal** | `git clone https://github.com/timtarou/ai-hp.git`<br>`cd ai-hp` | `npm start` |
+| Where | Install once | Run with a command | Or just ask |
+|---|---|---|---|
+| **Claude Code** | `/plugin marketplace add timtarou/ai-hp`<br>`/plugin install ai-hp@ai-hp` | `/ai-hp:ai-hp` | *"How much of my usage limits is left?"* |
+| **Codex** | Ask Codex:<br>`$skill-installer install https://github.com/timtarou/ai-hp/tree/main/skills/ai-hp into ~/.agents/skills` | `$ai-hp` | *"Show my AI HP"* |
+| **Terminal** | `git clone https://github.com/timtarou/ai-hp.git`<br>`cd ai-hp` | `npm start` | — |
 
-- In Claude Code and Codex you can also just ask: *"How much of my usage limits is left?"*
+- In Claude Code and Codex, any request about usage limits, remaining quota, reset times or banked resets starts it.
 - **English or Japanese:** ask "in English" / "in Japanese" in Claude Code or Codex, or run `npm start -- --lang en` (or `ja`) in the terminal. Without it, your OS language is used.
 - **Without the one-liners:** ask for it, or run `npm start -- --no-comment`.
 - If you installed from a clone with `npm run install-skills` (below), the commands are `/ai-hp` in Claude Code and `$ai-hp` in Codex.
@@ -58,6 +58,8 @@ Run it:
 /ai-hp:ai-hp
 ```
 
+Or just ask, for example *"How much of my usage limits is left?"*
+
 ### Codex
 
 Ask Codex:
@@ -71,6 +73,8 @@ $skill-installer install https://github.com/timtarou/ai-hp/tree/main/skills/ai-h
 ```
 $ai-hp
 ```
+
+Or just ask, for example *"Show my AI HP"*.
 
 Codex runs it outside the sandbox (it needs the network and your CLI logins), so approve that when asked.
 
@@ -89,6 +93,8 @@ npm start                  # in the terminal (options: npm start -- --lang en --
 /ai-hp                     # in Claude Code
 $ai-hp                     # in Codex
 ```
+
+In Claude Code and Codex you can also just ask, as above.
 
 ## Multiple accounts
 

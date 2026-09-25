@@ -19,13 +19,13 @@ Claude Code と Codex の両方で使えるスキルです（ターミナルか�
 
 ## 使い方
 
-| 使う場所 | 最初に 1 回だけ（インストール） | 実行するコマンド |
-|---|---|---|
-| **Claude Code** | `/plugin marketplace add timtarou/ai-hp`<br>`/plugin install ai-hp@ai-hp` | `/ai-hp:ai-hp` |
-| **Codex** | Codex に次のように頼む:<br>`$skill-installer install https://github.com/timtarou/ai-hp/tree/main/skills/ai-hp into ~/.agents/skills` | `$ai-hp` |
-| **ターミナル** | `git clone https://github.com/timtarou/ai-hp.git`<br>`cd ai-hp` | `npm start` |
+| 使う場所 | 最初に 1 回だけ（インストール） | コマンドで実行 | 言葉で頼む |
+|---|---|---|---|
+| **Claude Code** | `/plugin marketplace add timtarou/ai-hp`<br>`/plugin install ai-hp@ai-hp` | `/ai-hp:ai-hp` | 「利用枠はあとどれくらい？」 |
+| **Codex** | Codex に次のように頼む:<br>`$skill-installer install https://github.com/timtarou/ai-hp/tree/main/skills/ai-hp into ~/.agents/skills` | `$ai-hp` | 「AI の HP を見せて」 |
+| **ターミナル** | `git clone https://github.com/timtarou/ai-hp.git`<br>`cd ai-hp` | `npm start` | — |
 
-- Claude Code と Codex では、コマンドの代わりに「利用枠を見せて」と頼んでも動きます
+- Claude Code と Codex では、利用枠・残り枠・リセット日時・Banked reset について頼めば、言い方は自由です
 - **英語 / 日本語の切り替え**：Claude Code や Codex では「英語で」「日本語で」と頼みます。ターミナルでは `npm start -- --lang en`（または `ja`）。指定しなければ OS の言語設定に従います
 - **ひとことを消す**：「ひとことなしで」と頼むか、`npm start -- --no-comment`
 - clone して `npm run install-skills` で入れた場合（下記）は、Claude Code では `/ai-hp`、Codex では `$ai-hp` で呼びます
@@ -58,6 +58,8 @@ Claude Code と Codex の両方で使えるスキルです（ターミナルか�
 /ai-hp:ai-hp
 ```
 
+または「利用枠はあとどれくらい？」と頼んでも動きます。
+
 ### Codex
 
 Codex に次のように頼みます。
@@ -71,6 +73,8 @@ $skill-installer install https://github.com/timtarou/ai-hp/tree/main/skills/ai-h
 ```
 $ai-hp
 ```
+
+または「AI の HP を見せて」と頼んでも動きます。
 
 ネットワークと CLI のログイン情報を使うため、Codex はサンドボックス外で実行します。承認を求められたら許可してください。
 
@@ -89,6 +93,8 @@ npm start                  # ターミナル（設定の例: npm start -- --lang
 /ai-hp                     # Claude Code
 $ai-hp                     # Codex
 ```
+
+Claude Code と Codex では、上と同じように言葉で頼んでも動きます。
 
 ## 複数アカウント
 
