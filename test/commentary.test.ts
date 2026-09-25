@@ -112,7 +112,7 @@ describe("commentary", () => {
       NOW,
       first,
     );
-    assert.deepEqual(out, ["今いちばん元気なのは Claude a（team）（残り90%）。君に決めた！"]);
+    assert.deepEqual(out, ["今いちばん元気なのは Claude a/team（残り90%）。君に決めた！"]);
   });
 
   it("英語でも出す", () => {

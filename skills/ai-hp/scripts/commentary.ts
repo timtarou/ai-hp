@@ -125,7 +125,7 @@ function fill(template: string, params: Record<string, string | number>): string
   return template.replace(/\{(\w+)\}/g, (_, name: string) => String(params[name] ?? `{${name}}`));
 }
 
-/** 「Claude claude2」のような短い呼び名。同じ呼び名が複数あれば（個人と Team など）プランを添える */
+/** 「Claude claude2」のような短い呼び名。同じ呼び名が複数あれば（個人と Team など）「Claude tim/team」のようにプランを添える */
 function labeler(snapshots: Snapshot[]): (s: Snapshot) => string {
   const base = (s: Snapshot) => `${PROVIDER_NAME[s.provider]} ${s.email.split("@")[0]}`;
   const counts = new Map<string, number>();
@@ -133,7 +133,7 @@ function labeler(snapshots: Snapshot[]): (s: Snapshot) => string {
   return (s) => {
     const b = base(s);
     if ((counts.get(b) ?? 0) < 2 || !s.plan) return b;
-    return getLang() === "ja" ? `${b}（${s.plan}）` : `${b} (${s.plan})`;
+    return `${b}/${s.plan}`;
   };
 }
 
