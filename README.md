@@ -10,7 +10,7 @@
 
 - **Every account at once.** Personal and work (Team) accounts, Claude Code and Codex, sorted by which weekly limit resets next.
 - **Zero tokens, no credentials touched.** It asks the `claude` and `codex` CLIs you already use for their numbers, through their own logins. No prompts are sent, and ai-hp never reads API keys, tokens or browser cookies (only each account's email, to label the rows).
-- **Inside your agent too.** It is also a skill for Claude Code and Codex: ask *"which account should I use next?"* and the agent reads the table for you.
+- **Inside your agent too.** It is also a plugin for Claude Code and Codex: ask *"which account should I use next?"* and the agent reads the table for you.
 - **Small and dependency-free.** Node.js 18+, no dependencies, no telemetry, MIT.
 
 [日本語版 README](README.ja.md)
@@ -26,7 +26,7 @@ That's it for the terminal. To use it from inside Claude Code or Codex, install 
 | Where | Install once | Run with a command | Or just ask |
 |---|---|---|---|
 | **Claude Code** | `/plugin marketplace add timtarou/ai-hp`<br>`/plugin install ai-hp@ai-hp` | `/ai-hp:ai-hp` | *"How much of my usage limits is left?"* |
-| **Codex** | Ask Codex:<br>`$skill-installer install https://github.com/timtarou/ai-hp/tree/main/skills/ai-hp into ~/.agents/skills` | `$ai-hp` | *"Show my AI HP"* |
+| **Codex** | `codex plugin marketplace add timtarou/ai-hp`<br>`codex plugin add ai-hp@ai-hp` | `@ai-hp` | *"Show my AI HP"* |
 | **Both, with [skills.sh](https://skills.sh)** | `npx skills add timtarou/ai-hp -g` | `/ai-hp` or `$ai-hp` | *"When do my limits reset?"* |
 | **Terminal** | Nothing (`npx`), or `npm install -g ai-hp` | `npx ai-hp` or `ai-hp` | — |
 
@@ -72,7 +72,7 @@ When the output is not a terminal (the skill, a pipe, a file), ai-hp prints Mark
 - **[CodexBar](https://github.com/steipete/CodexBar).** If you want limits for many providers (Cursor, Gemini, Copilot and more) always visible in your menu bar, with notifications and cost tracking, use CodexBar; it does far more. ai-hp is deliberately narrower:
   - It never reads tokens or cookies. It only asks the `claude` and `codex` CLIs through their own interfaces. CodexBar mainly reads OAuth tokens or browser cookies and calls the providers' APIs itself.
   - Several Claude accounts work by logging each into its own config folder (`~/.claude-*`), with no extra tool. CodexBar reads several Claude subscriptions through claude-swap or tokens you paste into its config.
-  - Claude and Codex share one table sorted by the next weekly reset, and ai-hp is a Claude Code plugin and a Codex skill, so you can ask *"which account should I use next?"* inside the agent.
+  - Claude and Codex share one table sorted by the next weekly reset, and ai-hp is a plugin for both Claude Code and Codex, so you can ask *"which account should I use next?"* inside the agent.
 - **Log analyzers (such as ccusage).** They estimate tokens and cost from local session logs. ai-hp shows what the servers say is left, and when it resets.
 
 ## Install in detail
@@ -93,17 +93,18 @@ npm install -g ai-hp       # or install it, then run: ai-hp
 
 Run it with `/ai-hp:ai-hp`, or just ask, for example *"How much of my usage limits is left?"*
 
-### Codex
+### Codex (plugin)
 
-Ask Codex:
-
+```bash
+codex plugin marketplace add timtarou/ai-hp
+codex plugin add ai-hp@ai-hp
 ```
-$skill-installer install https://github.com/timtarou/ai-hp/tree/main/skills/ai-hp into ~/.agents/skills
-```
 
-`~/.agents/skills` is read by every `CODEX_HOME`, so one install covers all your Codex accounts. Restart Codex, then run it with `$ai-hp`, or just ask, for example *"Show my AI HP"*.
+Restart Codex, then type `@` and pick ai-hp, or just ask, for example *"Show my AI HP"*. Update it later with `codex plugin marketplace upgrade ai-hp`. Plugins are installed per `CODEX_HOME`, so run these once for each Codex home you use.
 
 Codex runs it outside the sandbox (it needs the network and your CLI logins), so approve that when asked.
+
+On a Codex without plugins, install the skill instead by asking Codex `$skill-installer install https://github.com/timtarou/ai-hp/tree/main/skills/ai-hp into ~/.agents/skills`, then run it with `$ai-hp`. `~/.agents/skills` is read by every `CODEX_HOME`.
 
 ### Claude Code and Codex with skills.sh
 
@@ -209,7 +210,7 @@ npm run demo       # draw the table with made-up accounts
 node scripts/screenshot.ts   # regenerate the images in docs/ (needs Google Chrome)
 ```
 
-To release, bump the version in `package.json`, `.claude-plugin/plugin.json` and `skills/ai-hp/scripts/cli.ts` (a test checks they match), rebuild, and publish a GitHub release tagged `v<version>`. The release workflow publishes to npm.
+To release, bump the version in `package.json`, `.claude-plugin/plugin.json`, `.codex-plugin/plugin.json` and `skills/ai-hp/scripts/cli.ts` (a test checks they match), rebuild, and publish a GitHub release tagged `v<version>`. The release workflow publishes to npm.
 
 ## License
 

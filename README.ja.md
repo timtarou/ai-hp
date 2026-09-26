@@ -10,7 +10,7 @@
 
 - **全アカウントを一度に**：個人用と仕事用（Team）、Claude Code と Codex をまたいで、週間枠のリセットが近い順に並べます
 - **トークン消費ゼロ、ログイン情報に触れない**：普段使っている `claude` と `codex` の CLI に、それぞれのログインのまま数字だけを問い合わせます。会話は送らず、API キー・トークン・ブラウザの Cookie も読みません（読むのは行の見出しに使うメールアドレスだけ）
-- **エージェントの中でも**：Claude Code と Codex のスキルでもあります。「次はどのアカウントを使えばいい？」と頼めば、エージェントが表を読んで答えます
+- **エージェントの中でも**：Claude Code と Codex のプラグインでもあります。「次はどのアカウントを使えばいい？」と頼めば、エージェントが表を読んで答えます
 - **小さく依存ゼロ**：Node.js 18 以上、依存パッケージなし、テレメトリなし、MIT
 
 [English README](README.md)
@@ -26,7 +26,7 @@ npx ai-hp
 | 使う場所 | 最初に 1 回だけ（インストール） | コマンドで実行 | 言葉で頼む |
 |---|---|---|---|
 | **Claude Code** | `/plugin marketplace add timtarou/ai-hp`<br>`/plugin install ai-hp@ai-hp` | `/ai-hp:ai-hp` | 「利用枠はあとどれくらい？」 |
-| **Codex** | Codex に次のように頼む:<br>`$skill-installer install https://github.com/timtarou/ai-hp/tree/main/skills/ai-hp into ~/.agents/skills` | `$ai-hp` | 「AI の HP を見せて」 |
+| **Codex** | `codex plugin marketplace add timtarou/ai-hp`<br>`codex plugin add ai-hp@ai-hp` | `@ai-hp` | 「AI の HP を見せて」 |
 | **両方（[skills.sh](https://skills.sh)）** | `npx skills add timtarou/ai-hp -g` | `/ai-hp` または `$ai-hp` | 「利用枠のリセットはいつ？」 |
 | **ターミナル** | 不要（`npx`）、または `npm install -g ai-hp` | `npx ai-hp` または `ai-hp` | — |
 
@@ -72,7 +72,7 @@ npx ai-hp
 - **[CodexBar](https://github.com/steipete/CodexBar)**：Cursor・Gemini・Copilot など多くのサービスの利用枠をメニューバーに常に出し、通知や費用の集計もしたいなら CodexBar です。機能ははるかに多いです。ai-hp はあえて範囲を絞っています
   - トークンや Cookie を一切読みません。`claude` と `codex` の CLI に、それぞれの窓口から問い合わせるだけです。CodexBar は主に OAuth トークンやブラウザの Cookie を読み、各サービスの API を自分で呼びます
   - Claude の複数アカウントは、アカウントごとに設定フォルダ（`~/.claude-*`）へログインしておくだけで読めます。追加のツールは要りません。CodexBar で Claude の複数契約を読むには、claude-swap を使うか、トークンを設定ファイルに貼ります
-  - Claude と Codex を 1 つの表にまとめて週間リセットの近い順に並べ、Claude Code のプラグインと Codex のスキルとしても動くので、エージェントに「次はどのアカウントを使えばいい？」と聞けます
+  - Claude と Codex を 1 つの表にまとめて週間リセットの近い順に並べ、Claude Code と Codex のプラグインとしても動くので、エージェントに「次はどのアカウントを使えばいい？」と聞けます
 - **ログの集計ツール（ccusage など）**：手元のセッション記録からトークン数や費用を見積もります。ai-hp はサーバーが返す実際の残りとリセット日時を表示します
 
 ## インストールの詳細
@@ -93,17 +93,18 @@ npm install -g ai-hp       # またはインストールして ai-hp で実行
 
 `/ai-hp:ai-hp` で実行します。「利用枠はあとどれくらい？」と頼んでも動きます。
 
-### Codex
+### Codex（プラグイン）
 
-Codex に次のように頼みます。
-
+```bash
+codex plugin marketplace add timtarou/ai-hp
+codex plugin add ai-hp@ai-hp
 ```
-$skill-installer install https://github.com/timtarou/ai-hp/tree/main/skills/ai-hp into ~/.agents/skills
-```
 
-`~/.agents/skills` は `CODEX_HOME` を分けた全アカウントから読まれるので、1 回入れれば全アカウントで使えます。Codex を起動し直してから `$ai-hp` で実行します。「AI の HP を見せて」と頼んでも動きます。
+Codex を起動し直してから、`@` を入力して ai-hp を選びます。「AI の HP を見せて」と頼んでも動きます。更新は `codex plugin marketplace upgrade ai-hp` です。プラグインは `CODEX_HOME` ごとに入るので、使っている Codex のフォルダごとに 1 回ずつ実行してください。
 
 ネットワークと CLI のログイン情報を使うため、Codex はサンドボックス外で実行します。承認を求められたら許可してください。
+
+プラグインに対応していない Codex では、代わりに Codex に `$skill-installer install https://github.com/timtarou/ai-hp/tree/main/skills/ai-hp into ~/.agents/skills` と頼んでスキルを入れ、`$ai-hp` で実行します。`~/.agents/skills` は `CODEX_HOME` を分けた全アカウントから読まれます。
 
 ### skills.sh で Claude Code と Codex に入れる
 
@@ -209,7 +210,7 @@ npm run demo       # 架空のアカウントで表を描く
 node scripts/screenshot.ts   # docs/ の画像を作り直す（Google Chrome が必要）
 ```
 
-リリースは、`package.json`・`.claude-plugin/plugin.json`・`skills/ai-hp/scripts/cli.ts` の version を上げて（テストが一致を確かめます）ビルドし、`v<version>` のタグで GitHub のリリースを公開します。リリースの workflow が npm に公開します。
+リリースは、`package.json`・`.claude-plugin/plugin.json`・`.codex-plugin/plugin.json`・`skills/ai-hp/scripts/cli.ts` の version を上げて（テストが一致を確かめます）ビルドし、`v<version>` のタグで GitHub のリリースを公開します。リリースの workflow が npm に公開します。
 
 ## ライセンス
 

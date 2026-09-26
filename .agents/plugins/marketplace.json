@@ -1,0 +1,20 @@
+{
+  "name": "ai-hp",
+  "interface": {
+    "displayName": "ai-hp"
+  },
+  "plugins": [
+    {
+      "name": "ai-hp",
+      "source": {
+        "source": "local",
+        "path": "./"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Developer Tools"
+    }
+  ]
+}

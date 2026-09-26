@@ -56,10 +56,19 @@ describe("dist（スキルが実行する JavaScript。Node 18 以上で動く�
 describe("公開するパッケージ", () => {
   const readJson = (file: string) => JSON.parse(readFileSync(path.join(root, file), "utf8"));
 
-  it("--version・package.json・Claude Code プラグインの version がそろっている", () => {
+  it("--version・package.json・Claude Code と Codex のプラグインの version がそろっている", () => {
     const version = execFileSync(process.execPath, [path.join(dist, "cli.js"), "--version"], { encoding: "utf8" }).trim();
     assert.equal(version, readJson("package.json").version);
     assert.equal(version, readJson(".claude-plugin/plugin.json").version);
+    assert.equal(version, readJson(".codex-plugin/plugin.json").version);
+  });
+
+  it("Codex のマーケットプレイスは、リポジトリ直下の ai-hp プラグインを指す", () => {
+    const marketplace = readJson(".agents/plugins/marketplace.json");
+    const [entry] = marketplace.plugins;
+    assert.equal(entry.name, readJson(".codex-plugin/plugin.json").name);
+    assert.deepEqual(entry.source, { source: "local", path: "./" });
+    assert.equal(readJson(".codex-plugin/plugin.json").skills, "./skills/");
   });
 
   it("npm パッケージには実行に要るファイルだけを入れる", () => {

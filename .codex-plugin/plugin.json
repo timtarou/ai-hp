@@ -1,0 +1,29 @@
+{
+  "name": "ai-hp",
+  "version": "0.5.0",
+  "description": "Weekly usage limits, reset times, model-specific limits (Fable) and banked resets for all your Claude Code and Codex accounts, soonest reset first",
+  "author": {
+    "name": "timtarou",
+    "url": "https://github.com/timtarou"
+  },
+  "homepage": "https://github.com/timtarou/ai-hp",
+  "repository": "https://github.com/timtarou/ai-hp",
+  "license": "MIT",
+  "keywords": ["usage", "quota", "rate-limits", "claude-code", "codex", "multi-account"],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "ai-hp",
+    "shortDescription": "Usage limits for all your Claude Code and Codex accounts",
+    "longDescription": "One table of weekly usage limits, reset times, model-specific limits (Fable), 5-hour limits and banked resets for every Claude Code and Codex account on this machine, sorted by the next weekly reset. It asks the claude and codex CLIs through their own interfaces, so it uses no tokens and never reads credentials.",
+    "developerName": "timtarou",
+    "category": "Developer Tools",
+    "capabilities": ["Read"],
+    "websiteURL": "https://github.com/timtarou/ai-hp",
+    "defaultPrompt": [
+      "How much of my usage limits is left?",
+      "Which account should I use next?",
+      "When do my limits reset?"
+    ],
+    "brandColor": "#23915A"
+  }
+}
