@@ -32,7 +32,7 @@ That's it for the terminal. To use it from inside Claude Code or Codex, install 
 
 - In Claude Code and Codex, any request about usage limits, remaining quota, reset times or banked resets starts it.
 - **English or Japanese:** ask "in English" / "in Japanese" in Claude Code or Codex, or run `npx ai-hp --lang en` (or `ja`). Without it, your OS language is used.
-- **Without the one-liner:** ask for it, or run `npx ai-hp --no-comment`.
+- **A one-line tip after the table** is off by default. Ask for one, or run `npx ai-hp --comment`.
 - Requires **Node.js 18+** and the `claude` and/or `codex` CLIs you want to cover.
 
 ## What it shows
@@ -45,7 +45,7 @@ That's it for the terminal. To use it from inside Claude Code or Codex, install 
 - A plain **“—”** under *Other weekly* or *Short-term* means that account has no such limit.
 - The same email with a **personal and a Team plan** shows as two rows, because they have separate limits.
 - Accounts that could not be read this time show their last values, marked *as of …*.
-- **💬 One-liner** under the table: one line of advice for right now. When it runs as a skill, Claude or Codex rewrites it on the spot. Turn it off with `--no-comment`.
+- **💬 One-liner** (optional): with `--comment`, one line of advice for right now goes under the table. When it runs as a skill, Claude or Codex rewrites it on the spot.
 - In a narrow terminal, each account is shown as a short card instead of a table row.
 
 <details>
@@ -153,7 +153,7 @@ From a clone, the same scripts are `sh skills/ai-hp/scripts/add-claude-account.s
 ## Options
 
 ```
-ai-hp [--lang en|ja] [--markdown] [--no-color] [--no-comment] [--debug]
+ai-hp [--lang en|ja] [--markdown] [--no-color] [--comment] [--debug]
 ai-hp add-claude <name> [email]
 ai-hp add-codex <name>
 ```
@@ -164,7 +164,7 @@ ai-hp add-codex <name>
 | Time zone | | `AI_HP_TZ` | `"timeZone"` | your OS time zone |
 | Markdown instead of the terminal table | `--markdown` | | | when the output is not a terminal |
 | Colors | `--no-color` to turn off | `NO_COLOR=1`, `FORCE_COLOR=1` | | in a terminal |
-| One-liner after the table | `--no-comment` to hide | `AI_HP_COMMENTARY=0` | `"commentary": false` | on |
+| One-liner after the table | `--comment` to show, `--no-comment` to hide | `AI_HP_COMMENTARY=1` | `"commentary": true` | off |
 | Raw responses to stderr | `--debug` | `AI_HP_DEBUG=1` | | off |
 | Folders to read | | `AI_HP_CLAUDE_DIRS`, `AI_HP_CODEX_HOMES` | | auto-detected |
 

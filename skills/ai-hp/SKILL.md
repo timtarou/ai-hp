@@ -23,9 +23,8 @@ Pass `--lang` matching the language the user is writing in. Always pass `--markd
 ## Showing the output
 
 - Paste the output as-is. Do not summarize, reorder, translate or drop columns (other weekly limits such as Fable, short-term limits, banked resets).
-- Under the table there is a single 💬 line of advice. **Replace it with your own single 💬 line** in the user's language: keep its advice, but make it fresh and fun — a timely meme, a short anime catchphrase or a game reference (HP, MP, inns, revive items). Exactly one 💬 line in the end; do not add any other comment. Keep quotes to a few words and never mock anyone. If you cannot improve it, keep the original line.
+- By default there is no line of advice under the table. Add it only when the user asks for a tip, a one-liner or some fun: run with `--comment`, then **replace the single 💬 line under the table with your own single 💬 line** in the user's language. Keep its advice, but make it fresh and fun — a timely meme, a short anime catchphrase or a game reference (HP, MP, inns, revive items). Exactly one 💬 line in the end; do not add any other comment. Keep quotes to a few words and never mock anyone. If you cannot improve it, keep the original line.
 - If there are "Failed" lines, relay them verbatim. Never fill in values by guessing.
-- If the user asks for no jokes, run with `--no-comment`; there is then no 💬 line to write.
 
 ## Adding accounts
 

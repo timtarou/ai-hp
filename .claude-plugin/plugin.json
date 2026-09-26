@@ -1,6 +1,6 @@
 {
   "name": "ai-hp",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "description": "Weekly usage limits, reset times, model-specific limits (Fable) and banked resets for all your Claude Code and Codex accounts, soonest reset first",
   "author": {
     "name": "timtarou",

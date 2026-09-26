@@ -32,7 +32,7 @@ npx ai-hp
 
 - Claude Code と Codex では、利用枠・残り枠・リセット日時・Banked reset について頼めば、言い方は自由です
 - **英語 / 日本語の切り替え**：Claude Code や Codex では「英語で」「日本語で」と頼みます。ターミナルでは `npx ai-hp --lang en`（または `ja`）。指定しなければ OS の言語設定に従います
-- **ひとことを消す**：「ひとことなしで」と頼むか、`npx ai-hp --no-comment`
+- **表のあとのひとこと**は既定では出しません。「ひとことも」と頼むか、`npx ai-hp --comment`
 - **Node.js 18 以上**と、対象にしたい `claude` / `codex` の CLI が必要です
 
 ## 表示する内容
@@ -45,7 +45,7 @@ npx ai-hp
 - 「別枠（週間）」「短期枠」の **「—」** は、そのアカウントにその枠がないという意味です
 - 同じメールアドレスの**個人と Team** は利用枠が別なので、別の行になります
 - 今回取得できなかったアカウントは、前回の値に〔○時点〕を付けて表示します
-- **💬 ひとこと**：表の下に、いま役立つ一言を 1 行（スキルとして呼ぶと、Claude や Codex がその場で書き直します）。`--no-comment` で消せます
+- **💬 ひとこと**（任意）：`--comment` を付けると、表の下に、いま役立つ一言を 1 行出します（スキルとして呼ぶと、Claude や Codex がその場で書き直します）
 - ターミナルの幅が足りないときは、表の代わりにアカウントごとに縦に並べます
 
 <details>
@@ -153,7 +153,7 @@ clone して使う場合は、同じスクリプトが `sh skills/ai-hp/scripts/
 ## 設定
 
 ```
-ai-hp [--lang en|ja] [--markdown] [--no-color] [--no-comment] [--debug]
+ai-hp [--lang en|ja] [--markdown] [--no-color] [--comment] [--debug]
 ai-hp add-claude <名前> [メールアドレス]
 ai-hp add-codex <名前>
 ```
@@ -164,7 +164,7 @@ ai-hp add-codex <名前>
 | タイムゾーン | | `AI_HP_TZ` | `"timeZone"` | OS のタイムゾーン |
 | ターミナル用の表の代わりに Markdown | `--markdown` | | | 出力先がターミナルでないとき |
 | 色 | `--no-color` で消す | `NO_COLOR=1`、`FORCE_COLOR=1` | | ターミナルのとき |
-| 表のあとの「ひとこと」 | `--no-comment` で消す | `AI_HP_COMMENTARY=0` | `"commentary": false` | 表示 |
+| 表のあとの「ひとこと」 | `--comment` で出す、`--no-comment` で消す | `AI_HP_COMMENTARY=1` | `"commentary": true` | 出さない |
 | 生の応答を標準エラーに出す | `--debug` | `AI_HP_DEBUG=1` | | 無効 |
 | 読むフォルダ | | `AI_HP_CLAUDE_DIRS`, `AI_HP_CODEX_HOMES` | | 自動検出 |
 

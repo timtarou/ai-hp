@@ -8,7 +8,7 @@ import { isValidTimeZone, systemTimeZone } from "./time.ts";
 export type Settings = {
   lang: Lang;
   timeZone: string;
-  /** 表のあとに「ひとこと」を出すか */
+  /** 表のあとに「ひとこと」を出すか（既定は出さない） */
   commentary: boolean;
   debug: boolean;
 };
@@ -39,6 +39,13 @@ function option(argv: string[], name: string): string | undefined {
   return inline?.slice(name.length + 1);
 }
 
+/** 表のあとの「ひとこと」は既定では出さない。--no-comment が最優先、次に --comment、環境変数、設定ファイル */
+function commentaryOn(argv: string[], env: NodeJS.ProcessEnv, fromFile: unknown): boolean {
+  if (argv.includes("--no-comment")) return false;
+  if (argv.includes("--comment")) return true;
+  return flag(env.AI_HP_COMMENTARY) ?? fromFile === true;
+}
+
 /** 優先順: コマンドライン引数 > 環境変数 > 設定ファイル（config.json）> OS の設定 */
 export async function loadSettings(argv: string[], env: NodeJS.ProcessEnv = process.env): Promise<Settings> {
   let file: ReturnType<typeof obj> = {};
@@ -53,7 +60,7 @@ export async function loadSettings(argv: string[], env: NodeJS.ProcessEnv = proc
   return {
     lang,
     timeZone: tz ?? systemTimeZone(),
-    commentary: !argv.includes("--no-comment") && (flag(env.AI_HP_COMMENTARY) ?? file.commentary !== false),
+    commentary: commentaryOn(argv, env, file.commentary),
     debug: argv.includes("--debug") || flag(env.AI_HP_DEBUG) === true,
   };
 }

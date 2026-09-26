@@ -14,18 +14,18 @@ import { buildReport, renderMarkdown } from "./report.js";
 import { configDir, loadSettings, setDebug } from "./settings.js";
 import { renderTerminal } from "./terminal.js";
 /** package.json と .claude-plugin/plugin.json の version と揃える（test/build.test.ts が検査する） */
-const VERSION = "0.4.0";
+const VERSION = "0.5.0";
 const HELP = `ai-hp ${VERSION} — an HP bar for your AI accounts: weekly usage limits, reset times and banked resets for all your Claude Code and Codex accounts
 
 Usage:
-  ai-hp [--lang en|ja] [--markdown] [--no-color] [--no-comment] [--debug]
+  ai-hp [--lang en|ja] [--markdown] [--no-color] [--comment] [--debug]
   ai-hp add-claude <name> [email]   log another Claude account into ~/.claude-<name> (query-only)
   ai-hp add-codex <name>            log another Codex account into ~/.codex-<name>
 
   --lang en|ja   output language (default: AI_HP_LANG, config.json, or your OS locale)
   --markdown     print a Markdown table (the default when the output is not a terminal)
   --no-color     no colors in the terminal table (also NO_COLOR=1)
-  --no-comment   leave out the one-liner after the table
+  --comment      add a one-line tip after the table (off by default; --no-comment turns it off again)
   --debug        print the raw server responses to stderr (no tokens) for bug reports
   --version      print the version
 

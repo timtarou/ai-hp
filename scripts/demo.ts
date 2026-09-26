@@ -1,5 +1,5 @@
 // 架空のアカウントで表を描く（README のスクリーンショット用。サーバーには問い合わせない）
-//   node scripts/demo.ts [--lang en|ja] [--columns 160] [--markdown] [--no-color]
+//   node scripts/demo.ts [--lang en|ja] [--columns 160] [--markdown] [--no-color] [--comment]
 import { oneLiner } from "../skills/ai-hp/scripts/commentary.ts";
 import { isLang, setLang } from "../skills/ai-hp/scripts/i18n.ts";
 import { buildReport, renderMarkdown } from "../skills/ai-hp/scripts/report.ts";
@@ -73,7 +73,7 @@ const model = buildReport({
   now,
   host: "alex-mbp",
   timeZone: lang === "ja" ? "Asia/Tokyo" : "America/Los_Angeles",
-  comment: argv.includes("--no-comment") ? undefined : oneLiner(fresh, now),
+  comment: argv.includes("--comment") ? oneLiner(fresh, now) : undefined,
 });
 console.log(
   argv.includes("--markdown")

@@ -32,6 +32,14 @@ function option(argv, name) {
     const inline = argv.find((a) => a.startsWith(`${name}=`));
     return inline?.slice(name.length + 1);
 }
+/** 表のあとの「ひとこと」は既定では出さない。--no-comment が最優先、次に --comment、環境変数、設定ファイル */
+function commentaryOn(argv, env, fromFile) {
+    if (argv.includes("--no-comment"))
+        return false;
+    if (argv.includes("--comment"))
+        return true;
+    return flag(env.AI_HP_COMMENTARY) ?? fromFile === true;
+}
 /** 優先順: コマンドライン引数 > 環境変数 > 設定ファイル（config.json）> OS の設定 */
 export async function loadSettings(argv, env = process.env) {
     let file = {};
@@ -47,7 +55,7 @@ export async function loadSettings(argv, env = process.env) {
     return {
         lang,
         timeZone: tz ?? systemTimeZone(),
-        commentary: !argv.includes("--no-comment") && (flag(env.AI_HP_COMMENTARY) ?? file.commentary !== false),
+        commentary: commentaryOn(argv, env, file.commentary),
         debug: argv.includes("--debug") || flag(env.AI_HP_DEBUG) === true,
     };
 }
