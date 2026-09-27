@@ -38,6 +38,9 @@
   "scripts": {
     "start": "node skills/ai-hp/dist/cli.js",
     "build": "tsc -p tsconfig.build.json",
+    "build:macos": "bash apps/macos/build.sh",
+    "start:macos": "open 'apps/macos/build/AI HP.app'",
+    "test:macos": "bash apps/macos/test.sh",
     "install-skills": "sh scripts/install-skills.sh",
     "add-claude": "sh skills/ai-hp/scripts/add-claude-account.sh",
     "add-codex": "sh skills/ai-hp/scripts/add-codex-account.sh",

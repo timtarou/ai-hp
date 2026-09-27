@@ -55,9 +55,9 @@ function scopeName(limit: Obj): string {
  * get_usage の応答を枠の一覧にする。rate_limits.limits には全体の週間枠（weekly_all）に加えて
  * Fable などモデル別の週間枠（weekly_scoped）が別枠として入る。
  */
-export function parseClaudeUsage(usage: Obj | undefined): { plan?: string; limits: Limit[] } | { skipped: string } {
+export function parseClaudeUsage(usage: Obj | undefined): { plan?: string; limits: Limit[] } | Omit<Skipped, "source"> {
   const rateLimits = obj(usage?.rate_limits);
-  if (usage?.rate_limits_available === false || !rateLimits) return { skipped: t("noPlanLimits") };
+  if (usage?.rate_limits_available === false || !rateLimits) return { skipped: t("noPlanLimits"), code: "no_plan_limits" };
   const limits: Limit[] = [];
   const entries = arr(rateLimits.limits)
     .map(obj)
@@ -88,7 +88,7 @@ export function parseClaudeUsage(usage: Obj | undefined): { plan?: string; limit
       if (used !== undefined) limits.push({ ...limit, usedPercent: used, resetsAt: dateOrUndefined(w?.resets_at) });
     }
   }
-  if (limits[0]?.kind !== "weekly") return { skipped: t("noWeeklyLimit") };
+  if (limits[0]?.kind !== "weekly") return { skipped: t("noWeeklyLimit"), code: "no_weekly_limit" };
   return { plan: str(usage?.subscription_type), limits };
 }
 
@@ -103,7 +103,7 @@ export async function collectClaude(opts: {
 }): Promise<Snapshot | Skipped> {
   const { configDir } = opts;
   const before = await readAccount(configDir);
-  if (!before) return { skipped: t("notLoggedIn"), source: configDir };
+  if (!before) return { skipped: t("notLoggedIn"), code: "not_logged_in", source: configDir };
 
   const env: NodeJS.ProcessEnv = { ...process.env, ENABLE_CLAUDEAI_MCP_SERVERS: "false" };
   if (isDefaultConfigDir(configDir)) delete env.CLAUDE_CONFIG_DIR;
@@ -142,7 +142,7 @@ export async function collectClaude(opts: {
   const usage = obj(response?.response);
   debugLog(`claude get_usage (${configDir})`, usage?.rate_limits);
   const parsed = parseClaudeUsage(usage);
-  if ("skipped" in parsed) return { skipped: parsed.skipped, source: configDir };
+  if ("skipped" in parsed) return { ...parsed, source: configDir };
 
   return {
     provider: "claude",

@@ -2,6 +2,23 @@ import { spawn } from "node:child_process";
 import { createInterface } from "node:readline";
 import { t } from "./i18n.ts";
 
+const active = new Set<() => void>();
+function cancelActive() { for (const cancel of [...active]) cancel(); }
+function register(cancel: () => void) {
+  if (active.size === 0) {
+    process.on("SIGTERM", cancelActive);
+    process.on("SIGINT", cancelActive);
+  }
+  active.add(cancel);
+}
+function unregister(cancel: () => void) {
+  active.delete(cancel);
+  if (active.size === 0) {
+    process.off("SIGTERM", cancelActive);
+    process.off("SIGINT", cancelActive);
+  }
+}
+
 /**
  * 1 行 1 JSON でやり取りする子プロセス（claude の stream-json / codex app-server）に
  * メッセージを送り、isDone が true になるまで応答を集めてから子プロセスを止める。
@@ -22,6 +39,8 @@ export function exchangeJsonLines(opts: {
       stdio: ["pipe", "pipe", "pipe"],
       // Windows では npm 経由の claude / codex が .cmd のため shell 経由で起動する
       shell: process.platform === "win32",
+      // A menu bar refresh can be cancelled; isolate provider descendants for cleanup.
+      detached: process.platform !== "win32",
     });
     const received: unknown[] = [];
     let stderr = "";
@@ -31,10 +50,22 @@ export function exchangeJsonLines(opts: {
       if (settled) return;
       settled = true;
       clearTimeout(timer);
-      child.kill();
+      unregister(cancel);
+      const stop = (signal: NodeJS.Signals) => {
+        try {
+          if (process.platform !== "win32" && child.pid) process.kill(-child.pid, signal);
+          else child.kill(signal);
+        } catch { /* already exited */ }
+      };
+      stop("SIGTERM");
+      // Reap descendants that ignore SIGTERM before the CLI exits.
+      if (child.pid && process.platform !== "win32") setTimeout(() => stop("SIGKILL"), 750);
       if (error) reject(error);
       else resolve(received);
     };
+
+    const cancel = () => finish(new Error("Usage query cancelled"));
+    register(cancel);
 
     const timer = setTimeout(
       () => finish(new Error(`${t("timeout", { cmd: opts.command, s: opts.timeoutMs / 1000 })}${tail(stderr)}`)),

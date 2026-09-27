@@ -78,7 +78,7 @@ describe("renderReport（日本語）", () => {
     );
   });
 
-  it("前回値は〔○時点〕を付け、リセットを過ぎていれば残り 100% の見込みにする", () => {
+  it("前回値は〔○時点〕を付け、リセット予定を過ぎても取得値を維持する", () => {
     const old: Snapshot = {
       ...claude,
       fetchedAt: new Date("2026-09-19T00:00:00Z"),
@@ -87,7 +87,7 @@ describe("renderReport（日本語）", () => {
     const out = render({ cached: [old] });
     assert.match(
       out,
-      /\| 済（9\/20\(日\) 09:00） \| Claude \| a@example\.com（max · \.claude） 〔9\/19\(土\) 09:00 時点〕 \| ██████████ 100%（リセット済みの見込み） \|/,
+      /\| 済（9\/20\(日\) 09:00） \| Claude \| a@example\.com（max · \.claude） 〔9\/19\(土\) 09:00 時点〕 \| █░░░░░░░░░ \*\*10%\*\* \|/,
     );
     assert.match(out, /前回値です/);
   });
@@ -205,7 +205,7 @@ describe("renderReport（英語）", () => {
       limits: [{ kind: "weekly", usedPercent: 90, resetsAt: new Date("2026-09-20T00:00:00Z") }],
     };
     const out = render({ cached: [old], excluded: [".codex-x (not logged in)"] });
-    assert.match(out, /〔as of Sat 9\/19 09:00〕 \| ██████████ 100% \(likely reset\) \|/);
+    assert.match(out, /〔as of Sat 9\/19 09:00〕 \| █░░░░░░░░░ \*\*10%\*\* \|/);
     assert.match(out, /- “— \(not supported\)” under Banked resets means .* It does not mean zero/);
     assert.match(rowOf(out, "a@example.com"), /\| — \(not supported\) \|$/);
     assert.match(out, /- Not shown: \.codex-x \(not logged in\)/);

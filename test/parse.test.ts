@@ -83,10 +83,12 @@ describe("parseClaudeUsage", () => {
   it("API キー利用などプラン枠が無い場合は対象外にする（理由は表示言語で返す）", () => {
     assert.deepEqual(parseClaudeUsage({ rate_limits_available: false, rate_limits: null }), {
       skipped: "プラン枠の対象外（API キー利用など）",
+      code: "no_plan_limits",
     });
     setLang("en");
     assert.deepEqual(parseClaudeUsage({ rate_limits_available: false, rate_limits: null }), {
       skipped: "no plan limits (API key or similar)",
+      code: "no_plan_limits",
     });
   });
 });

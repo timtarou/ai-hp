@@ -28,8 +28,7 @@ const messages = {
     resetDone: { en: "passed ({time})", ja: "済（{time}）" },
     resetDoneShort: { en: "passed", ja: "済" },
     resetAt: { en: "resets {time}", ja: "{time} リセット" },
-    resetPassedShort: { en: "reset", ja: "リセット済" },
-    likelyReset: { en: "likely reset", ja: "リセット済みの見込み" },
+    resetPassedShort: { en: "reset time passed", ja: "リセット予定経過" },
     staleAt: { en: "as of {time}", ja: "{time} 時点" },
     noAccounts: { en: "no accounts found", ja: "取得できたアカウントがありません" },
     bankedNotFetched: { en: "not fetched", ja: "未取得" },
@@ -41,8 +40,8 @@ const messages = {
     startsFrom: { en: "from {time}", ja: "{time} から" },
     paused: { en: "paused", ja: "一時停止中" },
     noteStale: {
-        en: "Rows marked 〔as of …〕 show the last values for accounts that could not be fetched this time. Log other Claude accounts into a query-only folder to keep them current (`npx ai-hp add-claude <name>`).",
-        ja: "〔○時点〕の行は今回取得できなかったアカウントの前回値です。Claude の別アカウントは、問い合わせ専用フォルダに一度ログインしておくと毎回最新値になります（`npx ai-hp add-claude <名前>`）。",
+        en: "Rows marked 〔as of …〕 are previous observations, not current values. Use --fresh-only to hide them. Connect each additional account with `ai-hp connect` to query it on future runs.",
+        ja: "〔○時点〕の行は前回値です。現在値ではありません。今回取得できた値だけを見るには --fresh-only を指定してください。別アカウントも毎回問い合わせるには `ai-hp connect` で個別に接続してください。",
     },
     noteNotFetched: {
         en: "Banked resets marked “not fetched” could not be read this time (see “Failed” below).",

@@ -99,7 +99,7 @@ export async function collectCodex(opts) {
     const account = obj(accountResult?.account);
     const email = str(account?.email);
     if (!account || !email)
-        return { skipped: t("notLoggedInOrApiKey"), source: home };
+        return { skipped: t("notLoggedInOrApiKey"), code: "not_logged_in_or_api_key", source: home };
     const limitsReply = reply(RATE_LIMITS_ID);
     if (limitsReply?.error) {
         throw new Error(t("requestFailed", { method: "account/rateLimits/read", detail: JSON.stringify(limitsReply.error).slice(0, 300) }));
@@ -107,7 +107,7 @@ export async function collectCodex(opts) {
     debugLog(`codex account/rateLimits/read (${home})`, limitsReply?.result);
     const parsed = parseCodexRateLimits(obj(limitsReply?.result));
     if (parsed.limits[0]?.kind !== "weekly")
-        return { skipped: t("noWeeklyLimit"), source: home };
+        return { skipped: t("noWeeklyLimit"), code: "no_weekly_limit", source: home };
     // Team 等では chatgptAccountId を複数人で共有するため、メールと組み合わせて鍵にする
     const accountId = parsed.accountId ?? str(obj(accountResult?.workspaceRouting)?.chatgptAccountId) ?? "unknown";
     return {

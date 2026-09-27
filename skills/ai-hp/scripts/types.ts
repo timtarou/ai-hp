@@ -45,4 +45,5 @@ export type Snapshot = {
 };
 
 /** 取得をやめた理由（未ログインなど）。エラーではない */
-export type Skipped = { skipped: string; source: string };
+export type SkipCode = "not_logged_in" | "not_logged_in_or_api_key" | "no_plan_limits" | "no_weekly_limit";
+export type Skipped = { skipped: string; source: string; code: SkipCode };

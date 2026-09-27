@@ -46,19 +46,12 @@ function paren(s: string): string {
   return getLang() === "ja" ? `（${s}）` : ` (${s})`;
 }
 
-/** 前回値でリセット日時を過ぎていれば、残りは 100% に戻っている見込み */
-function likelyReset(limit: Limit, stale: boolean, now: Date): boolean {
-  return stale && !!limit.resetsAt && limit.resetsAt <= now;
-}
-
-function remaining(limit: Limit, stale: boolean, now: Date): string {
-  if (likelyReset(limit, stale, now)) return `100%${paren(t("likelyReset"))}`;
+function remaining(limit: Limit): string {
   return percentText(remainingPercent(limit.usedPercent));
 }
 
-/** 週間 残りの列: 棒 + 数字 */
-function weeklyRemaining(limit: Limit, stale: boolean, now: Date): string {
-  if (likelyReset(limit, stale, now)) return `${indicator(100)} 100%${paren(t("likelyReset"))}`;
+/** 週間 残りの列。キャッシュも最後の取得値を表示し、回復を推測しない。 */
+function weeklyRemaining(limit: Limit): string {
   const r = remainingPercent(limit.usedPercent);
   return `${indicator(r)} ${percentText(r)}`;
 }
@@ -70,7 +63,7 @@ function resetText(limit: Limit, now: Date, timeZone: string): string {
 }
 
 /** Fable などモデル別の週間枠。リセット日時が全体の週間枠と同じなら省く */
-function scopedCell(s: Snapshot, weekly: Limit | undefined, stale: boolean, now: Date, timeZone: string): string {
+function scopedCell(s: Snapshot, weekly: Limit | undefined, now: Date, timeZone: string): string {
   const scoped = s.limits.filter((l) => l.kind === "scoped");
   if (scoped.length === 0) return "—";
   return scoped
@@ -84,13 +77,13 @@ function scopedCell(s: Snapshot, weekly: Limit | undefined, stale: boolean, now:
         : l.resetsAt <= now
           ? t("resetPassedShort")
           : t("resetAt", { time: formatDateTime(l.resetsAt, timeZone) });
-      return `${l.scope ?? "?"} ${remaining(l, stale, now)}${sameReset ? "" : paren(when)}`;
+      return `${l.scope ?? "?"} ${remaining(l)}${sameReset ? "" : paren(when)}`;
     })
     .join(getLang() === "ja" ? "、" : ", ");
 }
 
 /** 5 時間枠など週間より短い枠 */
-function shortTermCell(s: Snapshot, stale: boolean, now: Date, timeZone: string): string {
+function shortTermCell(s: Snapshot, now: Date, timeZone: string): string {
   const short = s.limits.filter((l) => l.kind === "short");
   if (short.length === 0) return "—";
   return short
@@ -100,7 +93,7 @@ function shortTermCell(s: Snapshot, stale: boolean, now: Date, timeZone: string)
         : l.resetsAt <= now
           ? t("resetDoneShort")
           : formatDateTime(l.resetsAt, timeZone);
-      return `${t("hoursWindow", { h: l.windowHours ?? "?" })} ${remaining(l, stale, now)}${paren(when)}`;
+      return `${t("hoursWindow", { h: l.windowHours ?? "?" })} ${remaining(l)}${paren(when)}`;
     })
     .join(getLang() === "ja" ? "、" : ", ");
 }
@@ -179,9 +172,9 @@ export function buildReport(input: ReportInput): ReportModel {
       weekly ? resetText(weekly, now, timeZone) : "—",
       PROVIDER_NAME[s.provider],
       accountCell(s, stale, timeZone),
-      weekly ? weeklyRemaining(weekly, stale, now) : "—",
-      scopedCell(s, weekly, stale, now, timeZone),
-      shortTermCell(s, stale, now, timeZone),
+      weekly ? weeklyRemaining(weekly) : "—",
+      scopedCell(s, weekly, now, timeZone),
+      shortTermCell(s, now, timeZone),
       creditsCell(s, now, timeZone),
     ];
   });

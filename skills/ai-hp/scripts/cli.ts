@@ -1,19 +1,17 @@
 #!/usr/bin/env node
 import { spawnSync } from "node:child_process";
-import { mkdir } from "node:fs/promises";
-import { hostname, tmpdir } from "node:os";
+import { hostname } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { loadCache, pickCachedOnly, saveCache } from "./cache.ts";
-import { collectClaude } from "./collect/claude.ts";
+import { collectUsage, collectionExitCode, describe, failedCollection } from "./collect.ts";
+import { connect } from "./connect.ts";
+import { findExecutable } from "./detect.ts";
 import { oneLiner } from "./commentary.ts";
-import { collectCodex } from "./collect/codex.ts";
-import { detectSources, findExecutable } from "./detect.ts";
+import { buildJsonOutput } from "./output-json.ts";
 import { getLang, setLang, t } from "./i18n.ts";
 import { buildReport, renderMarkdown } from "./report.ts";
 import { configDir, loadSettings, setDebug } from "./settings.ts";
 import { renderTerminal } from "./terminal.ts";
-import type { Skipped, Snapshot } from "./types.ts";
 
 /** package.json と .claude-plugin/plugin.json の version と揃える（test/build.test.ts が検査する） */
 const VERSION = "0.5.0";
@@ -21,12 +19,16 @@ const VERSION = "0.5.0";
 const HELP = `ai-hp ${VERSION} — an HP bar for your AI accounts: weekly usage limits, reset times and banked resets for all your Claude Code and Codex accounts
 
 Usage:
-  ai-hp [--lang en|ja] [--markdown] [--no-color] [--comment] [--debug]
+  ai-hp [--lang en|ja] [--markdown] [--json] [--include-cached] [--no-color] [--comment] [--debug]
   ai-hp add-claude <name> [email]   log another Claude account into ~/.claude-<name> (query-only)
   ai-hp add-codex <name>            log another Codex account into ~/.codex-<name>
+  ai-hp connect [claude|codex]      connect an account with automatic folder setup
 
   --lang en|ja   output language (default: AI_HP_LANG, config.json, or your OS locale)
   --markdown     print a Markdown table (the default when the output is not a terminal)
+  --json         print versioned JSON for apps (takes precedence over display options)
+  --include-cached  opt in to reading/writing previous observations (off by default)
+  --fresh-only   disable cache even if --include-cached is also supplied (the default)
   --no-color     no colors in the terminal table (also NO_COLOR=1)
   --comment      add a one-line tip after the table (off by default; --no-comment turns it off again)
   --debug        print the raw server responses to stderr (no tokens) for bug reports
@@ -45,7 +47,12 @@ const ACCOUNT_SCRIPTS: Record<string, string> = {
 function runAccountScript(command: string, args: string[]): number {
   // dist/cli.js からも scripts/cli.ts からも、スキルの scripts フォルダを指す
   const file = path.join(path.dirname(fileURLToPath(import.meta.url)), "..", "scripts", ACCOUNT_SCRIPTS[command]);
-  const env = { ...process.env, AI_HP_SELF: `ai-hp ${command}` }; // スクリプトの案内に出すコマンド名
+  const providerBin = findExecutable(command === "add-claude" ? "claude" : "codex");
+  const env = {
+    ...process.env,
+    PATH: [providerBin && path.dirname(providerBin), path.dirname(process.execPath), process.env.PATH].filter(Boolean).join(path.delimiter),
+    AI_HP_SELF: `ai-hp ${command}`,
+  };
   const r = spawnSync("sh", [file, ...args], { stdio: "inherit", env });
   if (r.error) {
     console.error(`${r.error.message}\nAdding accounts needs a POSIX shell (macOS, Linux or WSL).`);
@@ -59,26 +66,6 @@ function useColor(argv: string[], env: NodeJS.ProcessEnv): boolean {
   if (argv.includes("--no-color") || (env.NO_COLOR ?? "") !== "") return false;
   if (env.FORCE_COLOR !== undefined) return env.FORCE_COLOR !== "0";
   return !!process.stdout.isTTY;
-}
-
-function describe(e: unknown): string {
-  return e instanceof Error ? e.message : String(e);
-}
-
-/** 同じアカウントに複数のフォルダでログインしている場合は 1 件にまとめ、取得元を並べる */
-function mergeByAccount(snapshots: Snapshot[]): Snapshot[] {
-  const byKey = new Map<string, Snapshot>();
-  for (const s of snapshots) {
-    const prev = byKey.get(s.accountKey);
-    if (!prev) byKey.set(s.accountKey, s);
-    else {
-      // Banked reset を取れた方を優先し、どちらも同じなら新しい方を使う
-      const preferS = !!s.resetCredits !== !!prev.resetCredits ? !!s.resetCredits : prev.fetchedAt < s.fetchedAt;
-      const base = preferS ? s : prev;
-      byKey.set(s.accountKey, { ...base, sources: [...prev.sources, ...s.sources] });
-    }
-  }
-  return [...byKey.values()];
 }
 
 async function main(argv: string[]): Promise<number> {
@@ -95,54 +82,23 @@ async function main(argv: string[]): Promise<number> {
   setLang(settings.lang);
   setDebug(settings.debug);
 
-  const { claudeDirs, codexHomes } = await detectSources();
-  const claudeBin = findExecutable("claude");
-  const codexBin = findExecutable("codex");
-  const workDir = path.join(tmpdir(), "ai-hp");
-  await mkdir(workDir, { recursive: true });
+  if (argv[0] === "connect") return connect(argv.slice(1), runAccountScript);
 
-  const problems: string[] = [];
-  const tasks: { source: string; run: () => Promise<Snapshot | Skipped> }[] = [];
-  if (claudeBin) {
-    for (const configDir of claudeDirs) {
-      tasks.push({ source: configDir, run: () => collectClaude({ configDir, claudeBin, workDir }) });
-    }
-  } else if (claudeDirs.length > 0) {
-    problems.push(t("commandNotFound", { cmd: "claude" }));
-  }
-  if (codexBin) {
-    for (const home of codexHomes) {
-      tasks.push({ source: home, run: () => collectCodex({ home, codexBin, workDir }) });
-    }
-  } else if (codexHomes.length > 0) {
-    problems.push(t("commandNotFound", { cmd: "codex" }));
-  }
-
-  // 各アカウントを並行して問い合わせる
-  const results = await Promise.allSettled(tasks.map((task) => task.run()));
-  const collected: Snapshot[] = [];
-  const excluded: string[] = [];
-  results.forEach((r, i) => {
-    const source = path.basename(tasks[i].source);
-    if (r.status === "rejected") problems.push(`${source} — ${describe(r.reason)}`);
-    else if ("skipped" in r.value) {
-      excluded.push(getLang() === "ja" ? `${source}（${r.value.skipped}）` : `${source} (${r.value.skipped})`);
-    }
-    else collected.push(r.value);
+  const result = await collectUsage({}, {
+    includeCached: argv.includes("--include-cached") && !argv.includes("--fresh-only"),
   });
-  const fresh = mergeByAccount(collected);
-  for (const s of fresh) {
-    if (s.warning) problems.push(`${s.sources.map((p) => path.basename(p)).join(" / ")} — ${s.warning}`);
+  if (argv.includes("--json")) {
+    console.log(JSON.stringify(buildJsonOutput(result)));
+    return collectionExitCode(result);
   }
-
-  const now = new Date();
-  let cached: Snapshot[] = [];
-  try {
-    cached = pickCachedOnly(await loadCache(), fresh, now);
-    await saveCache([...fresh, ...cached]);
-  } catch (e) {
-    problems.push(t("cacheSaveFailed", { detail: describe(e) }));
-  }
+  const { fresh, cached, now } = result;
+  const excluded = result.excluded.map(({ source, skipped }) => getLang() === "ja"
+    ? `${path.basename(source)}（${skipped}）` : `${path.basename(source)} (${skipped})`);
+  const problems = result.issues.map((issue) => {
+    if (issue.code === "command_not_found") return t("commandNotFound", { cmd: issue.provider ?? "" });
+    if (issue.code === "cache_failed") return t("cacheSaveFailed", { detail: issue.message });
+    return `${issue.sources.map((source) => path.basename(source)).join(" / ")} — ${issue.message}`;
+  });
 
   const model = buildReport({
     fresh,
@@ -161,7 +117,7 @@ async function main(argv: string[]): Promise<number> {
       ? renderMarkdown(model)
       : renderTerminal(model, { columns: process.stdout.columns || 120, color: useColor(argv, process.env) }),
   );
-  return fresh.length === 0 && problems.length > 0 ? 1 : 0;
+  return collectionExitCode(result);
 }
 
 main(process.argv.slice(2)).then(
@@ -169,6 +125,7 @@ main(process.argv.slice(2)).then(
     process.exitCode = code;
   },
   (e: unknown) => {
+    if (process.argv.includes("--json")) console.log(JSON.stringify(buildJsonOutput(failedCollection(e))));
     console.error(describe(e));
     process.exitCode = 1;
   },

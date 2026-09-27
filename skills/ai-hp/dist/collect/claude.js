@@ -47,7 +47,7 @@ function scopeName(limit) {
 export function parseClaudeUsage(usage) {
     const rateLimits = obj(usage?.rate_limits);
     if (usage?.rate_limits_available === false || !rateLimits)
-        return { skipped: t("noPlanLimits") };
+        return { skipped: t("noPlanLimits"), code: "no_plan_limits" };
     const limits = [];
     const entries = arr(rateLimits.limits)
         .map(obj)
@@ -76,7 +76,7 @@ export function parseClaudeUsage(usage) {
         }
     }
     if (limits[0]?.kind !== "weekly")
-        return { skipped: t("noWeeklyLimit") };
+        return { skipped: t("noWeeklyLimit"), code: "no_weekly_limit" };
     return { plan: str(usage?.subscription_type), limits };
 }
 /**
@@ -87,7 +87,7 @@ export async function collectClaude(opts) {
     const { configDir } = opts;
     const before = await readAccount(configDir);
     if (!before)
-        return { skipped: t("notLoggedIn"), source: configDir };
+        return { skipped: t("notLoggedIn"), code: "not_logged_in", source: configDir };
     const env = { ...process.env, ENABLE_CLAUDEAI_MCP_SERVERS: "false" };
     if (isDefaultConfigDir(configDir))
         delete env.CLAUDE_CONFIG_DIR;
@@ -126,7 +126,7 @@ export async function collectClaude(opts) {
     debugLog(`claude get_usage (${configDir})`, usage?.rate_limits);
     const parsed = parseClaudeUsage(usage);
     if ("skipped" in parsed)
-        return { skipped: parsed.skipped, source: configDir };
+        return { ...parsed, source: configDir };
     return {
         provider: "claude",
         accountKey: `claude:${before.accountUuid}:${before.organizationUuid}`,

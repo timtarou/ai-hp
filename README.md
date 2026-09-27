@@ -1,5 +1,20 @@
 # ai-hp
 
+## macOS menu bar
+
+The CLI and native app live in this repository (`skills/ai-hp` and `apps/macos`). Build locally with Node.js 18+, Claude/Codex CLI, macOS 13+ and Apple Command Line Tools:
+
+```sh
+npm ci
+npm run build:macos
+npm run start:macos
+```
+
+The panel fetches fresh observations when opened or manually refreshed; it does not poll in the background. Search accounts, filter providers, and sort (nearest upcoming weekly reset by default). Account columns size to their text; the two-line rows align names/bars and detail text. Optional 5-hour, banked-reset and Fable/model-specific limits are available under **表示項目**. Choose relative resets, date/time, or weekday/time there; preferences persist. Settings offer system/light/dark appearance. Pinning is no longer available. Unconnected profiles appear in Settings, connection instructions clear on refresh, and error notices can be dismissed.
+
+See [macOS build and usage](apps/macos/README.md). Builds are locally ad-hoc signed, not notarized releases.
+
+
 [![npm](https://img.shields.io/npm/v/ai-hp)](https://www.npmjs.com/package/ai-hp)
 [![CI](https://github.com/timtarou/ai-hp/actions/workflows/ci.yml/badge.svg)](https://github.com/timtarou/ai-hp/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
@@ -14,6 +29,8 @@
 - **Small and dependency-free.** Node.js 18+, no dependencies, no telemetry, MIT.
 
 [日本語版 README](README.ja.md)
+
+A local macOS menu bar MVP is available from this clone: `npm run build:macos` then `npm run start:macos`. See the [macOS app guide](apps/macos/README.md).
 
 ## Quick start
 
@@ -44,7 +61,7 @@ That's it for the terminal. To use it from inside Claude Code or Codex, install 
 - **Banked resets:** resets you have in reserve, with their expiry (Codex). Claude rows show **“— (not supported)”**: Claude Code does not expose Claude’s banked resets, so ai-hp cannot show them. **This does not mean zero.** Zero shows as “0” (see [Claude's banked resets](#claudes-banked-resets-not-shown)).
 - A plain **“—”** under *Other weekly* or *Short-term* means that account has no such limit.
 - The same email with a **personal and a Team plan** shows as two rows, because they have separate limits.
-- Accounts that could not be read this time show their last values, marked *as of …*.
+- By default, only accounts fetched during this run are shown; the local usage cache is neither read nor written. With `--include-cached`, unavailable accounts can show their last values, marked *as of …*.
 - **💬 One-liner** (optional): with `--comment`, one line of advice for right now goes under the table. When it runs as a skill, Claude or Codex rewrites it on the spot.
 - In a narrow terminal, each account is shown as a short card instead of a table row.
 
@@ -127,6 +144,10 @@ Then `/ai-hp` in Claude Code and `$ai-hp` in Codex, or just ask.
 
 ## Multiple accounts
 
+Run `npx ai-hp connect`, choose Claude or Codex, and complete the browser login. Account names and separate config folders are assigned automatically; existing logins are preserved. To choose the provider directly, use `ai-hp connect claude` or `ai-hp connect codex`.
+
+From a development clone, run `npm start -- connect`. Personal and Team plans under the same email still need separate connections; choose the intended organization in the browser.
+
 ai-hp reads every account logged in on this machine:
 
 | Tool | Folders it reads |
@@ -154,7 +175,7 @@ From a clone, the same scripts are `sh skills/ai-hp/scripts/add-claude-account.s
 ## Options
 
 ```
-ai-hp [--lang en|ja] [--markdown] [--no-color] [--comment] [--debug]
+ai-hp [--lang en|ja] [--markdown] [--json] [--include-cached] [--no-color] [--comment] [--debug]
 ai-hp add-claude <name> [email]
 ai-hp add-codex <name>
 ```
@@ -164,12 +185,18 @@ ai-hp add-codex <name>
 | Language | `--lang en\|ja` | `AI_HP_LANG` | `"lang"` | your OS locale |
 | Time zone | | `AI_HP_TZ` | `"timeZone"` | your OS time zone |
 | Markdown instead of the terminal table | `--markdown` | | | when the output is not a terminal |
+| Read/write previous observations | `--include-cached` | | | off |
+| Structured output for apps | `--json` | | | off; overrides display options |
 | Colors | `--no-color` to turn off | `NO_COLOR=1`, `FORCE_COLOR=1` | | in a terminal |
 | One-liner after the table | `--comment` to show, `--no-comment` to hide | `AI_HP_COMMENTARY=1` | `"commentary": true` | off |
 | Raw responses to stderr | `--debug` | `AI_HP_DEBUG=1` | | off |
 | Folders to read | | `AI_HP_CLAUDE_DIRS`, `AI_HP_CODEX_HOMES` | | auto-detected |
 
 `config.json` lives in `~/.config/ai-hp/` (`$XDG_CONFIG_HOME/ai-hp`, or `%APPDATA%\ai-hp` on Windows).
+
+For menu bar apps and other integrations, `ai-hp --json` returns one versioned JSON object with observed usage values, cache freshness, and structured failures. It does not infer restored usage after a reset time passes. See the [JSON output contract](docs/json-output.md) for fields, exit codes, and cache isolation.
+
+Disabling ai-hp's cache does not bypass caches inside the provider CLIs. In particular, Claude Code can return a recent usage snapshot. ai-hp reports the values it receives; it cannot guarantee immediate agreement with the provider's web UI.
 
 ## How it works
 
@@ -178,7 +205,7 @@ ai-hp add-codex <name>
 | Claude | `claude -p` with the SDK control request `get_usage` (no hooks, plugins, MCP servers or session files are loaded) | none |
 | Codex | `codex app-server` per `CODEX_HOME`, with `account/read` and `account/rateLimits/read` | none |
 
-Both return the server's current values, so a forced or early reset shows up on the next run. Accounts are queried in parallel (a few seconds in total). ai-hp makes no network requests of its own and collects nothing: the CLIs talk to their own servers with their own logins, and ai-hp reads only the account email and IDs from each CLI's config to label and group the rows. Last values are kept in `~/Library/Caches/ai-hp` (macOS), `~/.cache/ai-hp` (Linux) or `%LOCALAPPDATA%\ai-hp` (Windows) and dropped after 14 days.
+Both query the provider CLI; forced resets appear when that CLI returns updated values. Accounts are queried in parallel (a few seconds in total). ai-hp makes no network requests of its own and collects nothing: the CLIs talk to their own servers with their own logins, and ai-hp reads only the account email and IDs from each CLI's config to label and group the rows. Only with `--include-cached`, last values are kept in `~/Library/Caches/ai-hp` (macOS), `~/.cache/ai-hp` (Linux) or `%LOCALAPPDATA%\ai-hp` (Windows) and dropped after 14 days.
 
 npm releases are published from GitHub Actions with [trusted publishing](https://docs.npmjs.com/trusted-publishers/): no npm token is stored anywhere, and each version published this way carries a provenance attestation, shown on npm, that links it to the commit it was built from.
 

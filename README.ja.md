@@ -1,5 +1,20 @@
 # ai-hp
 
+## macOSメニューバー
+
+CLI（`skills/ai-hp`）とネイティブアプリ（`apps/macos`）は同じRepoです。Node.js 18以上、Claude/Codex CLI、macOS 13以上、Apple Command Line Toolsを用意して実行します。
+
+```sh
+npm ci
+npm run build:macos
+npm run start:macos
+```
+
+パネルを開くか手動更新したときに取得し、バックグラウンドの定期取得は行いません。アカウント検索、プロバイダー絞り込み、並び替え（初期値は週間リセットが近い順）に対応します。アカウント列は文字幅に合わせて伸縮し、2行の縦位置を揃えています。「表示項目」で5時間枠・バンクリセット権・Fableなどのモデル別枠を追加でき、リセット表示も「相対」「実際の日時」「曜日と時刻」から選択・保存できます。
+
+設定でシステム連動／ライト／ダークを選べます。Pin機能は廃止しました。未ログインの設定フォルダは設定画面に表示し、接続案内は更新時に消去、取得エラーは閉じられます。[詳しい起動手順](apps/macos/README.md)も参照してください。配布用の署名・公証は未対応です。
+
+
 [![npm](https://img.shields.io/npm/v/ai-hp)](https://www.npmjs.com/package/ai-hp)
 [![CI](https://github.com/timtarou/ai-hp/actions/workflows/ci.yml/badge.svg)](https://github.com/timtarou/ai-hp/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
@@ -14,6 +29,8 @@
 - **小さく依存ゼロ**：Node.js 18 以上、依存パッケージなし、テレメトリなし、MIT
 
 [English README](README.md)
+
+macOSメニューバー版のローカルMVPも利用できます。クローン内で `npm run build:macos` → `npm run start:macos` を実行してください。[起動手順と機能](apps/macos/README.md)を参照してください。
 
 ## すぐ試す
 
@@ -44,7 +61,7 @@ npx ai-hp
 - **Banked reset**：取っておいたリセット権の数と失効日時（Codex）。Claude の行は **「—（非対応）」** になります。Claude の Banked reset は Claude Code の窓口から取得できないため表示できない、という意味で、**0 件ではありません**（0 件のときは「0」と表示します。[表示しない理由](#claude-の-banked-reset表示しない理由)）
 - 「別枠（週間）」「短期枠」の **「—」** は、そのアカウントにその枠がないという意味です
 - 同じメールアドレスの**個人と Team** は利用枠が別なので、別の行になります
-- 今回取得できなかったアカウントは、前回の値に〔○時点〕を付けて表示します
+- 通常は今回取得できたアカウントだけを表示し、利用枠のキャッシュを読み書きしません。`--include-cached` を指定した場合だけ、前回値も〔○時点〕付きで表示します
 - **💬 ひとこと**（任意）：`--comment` を付けると、表の下に、いま役立つ一言を 1 行出します（スキルとして呼ぶと、Claude や Codex がその場で書き直します）
 - ターミナルの幅が足りないときは、表の代わりにアカウントごとに縦に並べます
 
@@ -127,6 +144,10 @@ Claude Code では `/ai-hp`、Codex では `$ai-hp`。言葉で頼んでも動�
 
 ## 複数アカウント
 
+手軽に追加するには `npx ai-hp connect` を実行し、Claude / Codexを選んでブラウザでログインします。名前や保存先は自動で決まります。既存のログインは変更しません。
+
+クローンした開発版では `npm start -- connect --lang ja`。サービスを直接選ぶなら `npm start -- connect claude --lang ja` または `npm start -- connect codex --lang ja` を使います。同じメールの個人・Teamプランは、ブラウザで追加したい組織を選んで別々に接続してください。
+
 このマシンでログインしている全アカウントを読みます。
 
 | ツール | 読むフォルダ |
@@ -154,7 +175,7 @@ clone して使う場合は、同じスクリプトが `sh skills/ai-hp/scripts/
 ## 設定
 
 ```
-ai-hp [--lang en|ja] [--markdown] [--no-color] [--comment] [--debug]
+ai-hp [--lang en|ja] [--markdown] [--json] [--include-cached] [--no-color] [--comment] [--debug]
 ai-hp add-claude <名前> [メールアドレス]
 ai-hp add-codex <名前>
 ```
@@ -164,12 +185,18 @@ ai-hp add-codex <名前>
 | 表示言語 | `--lang en\|ja` | `AI_HP_LANG` | `"lang"` | OS の言語設定 |
 | タイムゾーン | | `AI_HP_TZ` | `"timeZone"` | OS のタイムゾーン |
 | ターミナル用の表の代わりに Markdown | `--markdown` | | | 出力先がターミナルでないとき |
+| 前回値の読み書きを有効にする | `--include-cached` | | | オフ |
+| アプリ向けの構造化出力 | `--json` | | | オフ。他の表示オプションより優先 |
 | 色 | `--no-color` で消す | `NO_COLOR=1`、`FORCE_COLOR=1` | | ターミナルのとき |
 | 表のあとの「ひとこと」 | `--comment` で出す、`--no-comment` で消す | `AI_HP_COMMENTARY=1` | `"commentary": true` | 出さない |
 | 生の応答を標準エラーに出す | `--debug` | `AI_HP_DEBUG=1` | | 無効 |
 | 読むフォルダ | | `AI_HP_CLAUDE_DIRS`, `AI_HP_CODEX_HOMES` | | 自動検出 |
 
 `config.json` は `~/.config/ai-hp/` に置きます（`$XDG_CONFIG_HOME/ai-hp`、Windows は `%APPDATA%\ai-hp`）。
+
+メニューバーアプリなどとの連携には `ai-hp --json` を使います。取得値、キャッシュの鮮度、構造化した失敗理由を、バージョン付きのJSON一件で返します。リセット予定時刻を過ぎても残量を推測で変更しません。フィールド・終了コード・専用キャッシュについては [JSON出力仕様](docs/json-output.md) を参照してください。
+
+ai-hpのキャッシュを無効にしても、Claude Codeなど取得元CLIの内部キャッシュまでは無効にできません。ai-hpはCLIから返された値を表示するため、Web画面との即時一致を保証するものではありません。
 
 ## 仕組み
 
@@ -178,7 +205,7 @@ ai-hp add-codex <名前>
 | Claude | `claude -p` に SDK の制御要求 `get_usage` を送る（フック・プラグイン・MCP・セッション記録は読み込まない） | なし |
 | Codex | `CODEX_HOME` ごとに `codex app-server` を起動し、`account/read` と `account/rateLimits/read` を送る | なし |
 
-どちらもサーバーの現在値を返すので、強制リセットなどでリセット日時が変わっても次の実行で反映されます。各アカウントには並行して問い合わせます（全体で数秒）。ai-hp 自身はネットワークに接続せず、何も収集しません。サーバーとやり取りするのは各 CLI で、ai-hp が CLI の設定から読むのは、行の見出しとまとめに使うメールアドレスと ID だけです。前回値は `~/Library/Caches/ai-hp`（macOS）、`~/.cache/ai-hp`（Linux）、`%LOCALAPPDATA%\ai-hp`（Windows）に残し、14 日で捨てます。
+どちらも取得元CLIへ問い合わせ、CLIが更新した値を返した時点で強制リセットなどの変更が反映されます。各アカウントには並行して問い合わせます（全体で数秒）。ai-hp 自身はネットワークに接続せず、何も収集しません。サーバーとやり取りするのは各 CLI で、ai-hp が CLI の設定から読むのは、行の見出しとまとめに使うメールアドレスと ID だけです。`--include-cached` を指定した場合だけ、前回値を `~/Library/Caches/ai-hp`（macOS）、`~/.cache/ai-hp`（Linux）、`%LOCALAPPDATA%\ai-hp`（Windows）に残し、14 日で捨てます。
 
 npm への公開は GitHub Actions の [trusted publishing](https://docs.npmjs.com/trusted-publishers/) で行います。npm のトークンはどこにも保存せず、この方法で公開したバージョンには、どのコミットから作られたかを示す provenance が npm 上に付きます。
 
