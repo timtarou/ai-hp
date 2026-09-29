@@ -47,3 +47,5 @@ Native checks cover JSON dates/nulls/schema versions, preservation of observed p
 This is not a notarized distribution. General deployment still needs a Developer ID signature, notarization, architecture/release packaging and a Node distribution decision. Browser login, login-at-startup, repeated panel opening and long-running behavior still need hands-on validation. The private repository's optional Claude banked-reset collector is not bundled in this build.
 
 Unconnected profiles are listed in Settings instead of persistent warnings. Connection instructions clear on refresh; error notices have dismiss buttons. Account width follows displayed text, both row positions align, and pinning is removed.
+
+Hover an account row to reveal a refresh button immediately after its weekly percentage. It queries only that account’s login folders and updates that row’s limits, leaving other observations unchanged. While fetching, the icon becomes a spinner and further refreshes are disabled. Failed account refreshes retain the last observation with an explicit warning; login identity changes are rejected. The footer time still refers to the last full refresh.

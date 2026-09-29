@@ -35,7 +35,7 @@ struct Panel: View {
     private var listHeight: CGFloat {
         let rows = store.displayedAccounts.reduce(0) { total, account in
             let scoped = store.showScoped ? account.limits.filter { $0.kind == "scoped" }.count : 0
-            return total + 61 + scoped * 46
+            return total + 61 + scoped * 46 + (store.accountErrors[account.id] == nil ? 0 : 36)
         }
         return CGFloat(min(480, max(90, rows + store.messages.count * 44)))
     }
@@ -176,7 +176,13 @@ struct AccountRow: View {
     private var shortColumn: LimitColumn {
         LimitColumn(limit: account.limits.first { $0.kind == "short" && $0.windowHours == 5 }, title: "5時間の残り枠", resetDisplay: store.resetDisplay)
     }
-    private var weeklyColumn: LimitColumn { LimitColumn(limit: account.weekly, title: "週の残り枠", resetDisplay: store.resetDisplay) }
+    private var weeklyColumn: LimitColumn {
+        LimitColumn(limit: account.weekly, title: "週の残り枠", resetDisplay: store.resetDisplay,
+                    showRefresh: store.hoveredAccount == account.id,
+                    refreshing: store.refreshingAccountID == account.id,
+                    refreshDisabled: store.updating,
+                    refreshAction: { store.refresh(account: account) })
+    }
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             Grid(alignment: .leading, horizontalSpacing: 16, verticalSpacing: 3) {
@@ -207,6 +213,12 @@ struct AccountRow: View {
                     }
                 }
             }.padding(.horizontal, 10).frame(height: 60)
+            if let error = store.accountErrors[account.id] {
+                Label(error, systemImage: "exclamationmark.triangle")
+                    .font(.caption2).foregroundStyle(.orange).lineLimit(2)
+                    .help(error).frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.horizontal, 10).frame(height: 36)
+            }
             ForEach(Array(scoped.enumerated()), id: \.offset) { _, limit in
                 HStack(spacing: 16) {
                     Text(limit.scope ?? "モデル別枠").font(.caption).foregroundStyle(.secondary)
@@ -232,6 +244,10 @@ private struct LimitColumn: View {
     let limit: UsageLimit?
     let title: String
     let resetDisplay: ResetDisplay
+    var showRefresh = false
+    var refreshing = false
+    var refreshDisabled = false
+    var refreshAction: (() -> Void)? = nil
     var body: some View {
         VStack(alignment: .leading, spacing: 3) {
             bar.frame(height: 16)
@@ -255,7 +271,18 @@ private struct LimitColumn: View {
                 .font(.system(size: 13, weight: .medium))
                 .foregroundStyle(limit.map { $0.remaining < 20 ? Color.red : Color.primary } ?? Color.secondary)
                 .accessibilityLabel("\(title) \(limit?.percentage ?? "未取得")")
-            Spacer(minLength: 12)
+            if let refreshAction {
+                ZStack {
+                    Button(action: refreshAction) { Image(systemName: "arrow.clockwise") }
+                        .buttonStyle(.plain).disabled(refreshDisabled)
+                        .opacity(showRefresh && !refreshing ? 1 : 0)
+                        .allowsHitTesting(showRefresh && !refreshing)
+                        .accessibilityHidden(!showRefresh || refreshing)
+                        .accessibilityLabel("このアカウントを更新").help("このアカウントだけ更新")
+                    if refreshing { ProgressView().controlSize(.mini).accessibilityLabel("更新中") }
+                }.frame(width: 12, height: 12)
+            }
+            Spacer(minLength: 4)
             Text(limit?.resetDisplay(resetDisplay) ?? "—").foregroundStyle(.secondary)
                 .help(limit?.resetLabel() ?? "未取得")
         }.font(.system(size: 10)).monospacedDigit().lineLimit(1)

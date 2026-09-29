@@ -8,6 +8,24 @@ assert(decoded.accounts[0].weekly?.percentage == "53%")
 assert(decoded.accounts[0].weekly?.resetLabel().hasPrefix("予定時刻経過") == true)
 assert(decoded.accounts[0].resetCredits.label == "リセット権：非対応")
 assert(decoded.accounts[0].isFresh)
+let targetAccount = decoded.accounts[0]
+let targetEnv = try accountRefreshEnvironment(targetAccount, base: ["PATH": "/fixture/bin", "AI_HP_CODEX_HOMES": "/unrelated"])
+assert(targetEnv["AI_HP_CLAUDE_DIRS"] == "/fixture/.claude")
+assert(targetEnv["AI_HP_CODEX_HOMES"] == ":")
+assert(targetEnv["PATH"] == "/fixture/bin")
+let refreshedTarget = try refreshedAccount(targetAccount, from: decoded)
+assert(refreshedTarget.id == targetAccount.id)
+let otherIdentity = UsageAccount(provider: "codex", accountKey: "other", email: "other@example.com", plan: nil,
+    sources: ["/fixture/.codex"], fetchedAt: nil, freshness: "fresh", limits: [],
+    resetCredits: UsageCredits(status: "unknown", available: nil, items: []))
+let codexEnv = try accountRefreshEnvironment(otherIdentity, base: [:])
+assert(codexEnv["AI_HP_CLAUDE_DIRS"] == ":")
+assert(codexEnv["AI_HP_CODEX_HOMES"] == "/fixture/.codex")
+do {
+    _ = try refreshedAccount(otherIdentity, from: decoded)
+    fatalError("an account refresh accepted another identity")
+} catch { }
+
 let base = Date(timeIntervalSince1970: 1700000000)
 func sample(_ id: String, _ provider: String, _ percent: Double, _ reset: Date?) -> UsageAccount {
     UsageAccount(provider: provider, accountKey: id, email: "\(id)@example.com", plan: "pro", sources: [], fetchedAt: base,

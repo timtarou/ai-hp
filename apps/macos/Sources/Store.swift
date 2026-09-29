@@ -7,6 +7,8 @@ import ServiceManagement
     @Published var messages: [String] = []
     @Published var unconnectedMessages: [String] = []
     @Published var updating = false
+    @Published var refreshingAccountID: String?
+    @Published var accountErrors: [String: String] = [:]
     @Published var lastRead: Date?
     @Published var showSettings = false
     @Published var connectionNotice: String?
@@ -89,6 +91,7 @@ import ServiceManagement
         guard !updating, !sleeping, !stopped else { return }
         accounts = [] // Never present old numbers as current during a failed refresh.
         messages = []
+        accountErrors = [:]
         unconnectedMessages = []
         connectionNotice = nil
         guard FileManager.default.isExecutableFile(atPath: nodePath), let cli else {
@@ -119,6 +122,39 @@ import ServiceManagement
                 }
             }
         }
+    }
+    func refresh(account: UsageAccount) {
+        guard !updating, !sleeping, !stopped else { return }
+        do {
+            guard FileManager.default.isExecutableFile(atPath: nodePath), let cli else {
+                throw AppError.message("Node.jsが見つかりません。設定を確認してください。")
+            }
+            let env = try accountRefreshEnvironment(account, base: environment)
+            accountErrors[account.id] = nil
+            refreshingAccountID = account.id
+            updating = true
+            let job = CLIWorker()
+            worker = job
+            job.query(node: nodePath, cli: cli, environment: env) { [weak self] result in
+                Task { @MainActor in
+                    guard let self, !self.stopped else { return }
+                    self.updating = false
+                    self.refreshingAccountID = nil
+                    self.worker = nil
+                    do {
+                        let data = try result.get()
+                        let fresh = try refreshedAccount(account, from: data)
+                        if let index = self.accounts.firstIndex(where: { $0.id == account.id }) {
+                            self.accounts[index] = fresh
+                        }
+                        let warnings = data.issues.map(\.message).joined(separator: " / ")
+                        if !warnings.isEmpty { self.accountErrors[account.id] = warnings }
+                    } catch {
+                        self.accountErrors[account.id] = "更新失敗（前回値を表示）：" + error.localizedDescription
+                    }
+                }
+            }
+        } catch { accountErrors[account.id] = "更新失敗（前回値を表示）：" + error.localizedDescription }
     }
     func setLogin(_ enabled: Bool) {
         do {

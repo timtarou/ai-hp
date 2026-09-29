@@ -180,3 +180,24 @@ func visibleAccounts(_ accounts: [UsageAccount], provider: String, search: Strin
         return a.accountKey < b.accountKey
     }
 }
+
+// Restrict discovery to this account's known login folders. A colon is an
+// explicit empty list for the other provider (an empty string means auto-detect).
+func accountRefreshEnvironment(_ account: UsageAccount, base: [String: String]) throws -> [String: String] {
+    guard ["claude", "codex"].contains(account.provider), !account.sources.isEmpty,
+          account.sources.allSatisfy({ !$0.isEmpty && !$0.contains(":") }) else {
+        throw AppError.message("このアカウントの接続先を特定できません。全体を更新してください。")
+    }
+    var env = base
+    env["AI_HP_CLAUDE_DIRS"] = account.provider == "claude" ? account.sources.joined(separator: ":") : ":"
+    env["AI_HP_CODEX_HOMES"] = account.provider == "codex" ? account.sources.joined(separator: ":") : ":"
+    return env
+}
+
+func refreshedAccount(_ account: UsageAccount, from envelope: UsageEnvelope) throws -> UsageAccount {
+    guard let fresh = envelope.accounts.first(where: { $0.id == account.id && $0.provider == account.provider && $0.isFresh }) else {
+        let reasons = (envelope.issues + envelope.excluded).map(\.message).joined(separator: " / ")
+        throw AppError.message(reasons.isEmpty ? "同じアカウントを取得できませんでした。ログイン状態を確認してください。" : reasons)
+    }
+    return fresh
+}
