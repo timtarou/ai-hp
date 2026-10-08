@@ -15,6 +15,20 @@ function statePath(configDir) {
         ? path.join(homedir(), ".claude.json")
         : path.join(configDir, ".claude.json");
 }
+/**
+ * oauthAccount（Claude Code がログイン時に保存するプロフィール。トークンは含まない）から読む。
+ * 契約を始めた日時は、サブスクリプション払い（billingType が *_subscription）のときだけ更新の基準にする
+ */
+export function parseClaudeAccount(oauthAccount) {
+    const accountUuid = str(oauthAccount?.accountUuid);
+    const email = str(oauthAccount?.emailAddress);
+    const organizationUuid = str(oauthAccount?.organizationUuid) ?? "none";
+    if (!accountUuid || !email)
+        return undefined;
+    const subscribed = /_subscription$/.test(str(oauthAccount?.billingType) ?? "");
+    const started = subscribed ? dateOrUndefined(oauthAccount?.subscriptionCreatedAt) : undefined;
+    return { accountUuid, organizationUuid, email, billingAnchor: started };
+}
 async function readAccount(configDir) {
     let raw;
     try {
@@ -23,18 +37,15 @@ async function readAccount(configDir) {
     catch {
         return undefined;
     }
-    const account = obj(obj(JSON.parse(raw))?.oauthAccount);
-    const accountUuid = str(account?.accountUuid);
-    const email = str(account?.emailAddress);
-    const organizationUuid = str(account?.organizationUuid) ?? "none";
-    return accountUuid && email ? { accountUuid, organizationUuid, email } : undefined;
+    return parseClaudeAccount(obj(obj(JSON.parse(raw))?.oauthAccount));
 }
 function sameAccount(a, b) {
     return a?.accountUuid === b.accountUuid && a.organizationUuid === b.organizationUuid;
 }
 function dateOrUndefined(v) {
     const s = str(v);
-    return s ? new Date(s) : undefined;
+    const d = s ? new Date(s) : undefined;
+    return d && !Number.isNaN(d.getTime()) ? d : undefined;
 }
 function scopeName(limit) {
     const scope = obj(limit.scope);
@@ -135,6 +146,7 @@ export async function collectClaude(opts) {
         limits: parsed.limits,
         // Claude の Banked reset は Claude Code の窓口（get_usage）に含まれないため表示しない
         resetCreditsOff: true,
+        billingAnchor: after?.billingAnchor,
         fetchedAt: new Date(),
         sources: [configDir],
     };

@@ -3,6 +3,7 @@ import { beforeEach, describe, it } from "node:test";
 import { pickCachedOnly, reviveSnapshot } from "../skills/ai-hp/scripts/cache.ts";
 import { setLang } from "../skills/ai-hp/scripts/i18n.ts";
 import { indicator, renderReport } from "../skills/ai-hp/scripts/report.ts";
+import { nextMonthlyRenewal } from "../skills/ai-hp/scripts/time.ts";
 import type { Snapshot } from "../skills/ai-hp/scripts/types.ts";
 
 const TZ = "Asia/Tokyo";
@@ -52,7 +53,7 @@ describe("renderReport（日本語）", () => {
   it("Claude は 1 行に週間・Fable の別枠・5 時間枠を並べる", () => {
     assert.equal(
       rowOf(render({ fresh: [claude] }), "a@example.com"),
-      "| 9/27(日) 05:00（あと1日15時間） | Claude | a@example.com（max · .claude） | ████████░░ 83% | Fable 100% | 5時間 73%（9/25(金) 16:50） | 未取得 |",
+      "| 9/27(日) 05:00（あと1日15時間） | Claude | a@example.com（max · .claude） | ████████░░ 83% | Fable 100% | 5時間 73%（9/25(金) 16:50） | 未取得 | — |",
     );
   });
 
@@ -74,7 +75,7 @@ describe("renderReport（日本語）", () => {
   it("Codex は Banked reset の数と失効日時を出し、残りが少ない枠は太字にする", () => {
     assert.equal(
       rowOf(render({ fresh: [codex] }), "b@example.com"),
-      "| 9/26(土) 17:49（あと1日3時間） | Codex | b@example.com（pro · .codex-account-b） | ░░░░░░░░░░ **0%** | — | — | 1回（10/23(金) 06:01 失効） |",
+      "| 9/26(土) 17:49（あと1日3時間） | Codex | b@example.com（pro · .codex-account-b） | ░░░░░░░░░░ **0%** | — | — | 1回（10/23(金) 06:01 失効） | — |",
     );
   });
 
@@ -97,7 +98,7 @@ describe("renderReport（日本語）", () => {
       ...codex,
       resetCredits: { available: 1, items: [{ title: "Full reset", count: 1, expiresAt: new Date("2026-09-24T00:00:00Z") }] },
     };
-    assert.match(rowOf(render({ cached: [expired] }), "b@example.com"), /\| 0 \|$/);
+    assert.match(rowOf(render({ cached: [expired] }), "b@example.com"), /\| 0 \| — \|$/);
   });
 
   it("付与単位ごとに残り回数を持つ Banked reset は、合計と付与ごとの使用期限を出す", () => {
@@ -113,7 +114,7 @@ describe("renderReport（日本語）", () => {
     };
     assert.match(
       rowOf(render({ fresh: [withResets] }), "a@example.com"),
-      /\| 3回（Gift · 10\/1\(木\) 09:00 失効 · 一時停止中、Weekly reset · 2回 · 10\/10\(土\) 09:00 失効） \|$/,
+      /\| 3回（Gift · 10\/1\(木\) 09:00 失効 · 一時停止中、Weekly reset · 2回 · 10\/10\(土\) 09:00 失効） \| — \|$/,
     );
   });
 
@@ -133,19 +134,19 @@ describe("renderReport（日本語）", () => {
     };
     assert.match(
       rowOf(render({ fresh: [launch] }), "a@example.com"),
-      /\| 1回（Claude Opus 5\.5 launch · 10\/23\(金\) 01:00 失効） \|$/,
+      /\| 1回（Claude Opus 5\.5 launch · 10\/23\(金\) 01:00 失効） \| — \|$/,
     );
   });
 
   it("Banked reset の対象外は 0 と理由を出す", () => {
     const ineligible: Snapshot = { ...claude, resetCredits: { available: 0, items: [], note: "プラン対象外" } };
-    assert.match(rowOf(render({ fresh: [ineligible] }), "a@example.com"), /\| 0（プラン対象外） \|$/);
+    assert.match(rowOf(render({ fresh: [ineligible] }), "a@example.com"), /\| 0（プラン対象外） \| — \|$/);
   });
 
   it("Claude の Banked reset は取得しないので「—（非対応）」と注記を出し、0 件と区別する", () => {
     const off: Snapshot = { ...claude, resetCreditsOff: true };
     const out = render({ fresh: [off] });
-    assert.match(rowOf(out, "a@example.com"), /\| —（非対応） \|$/);
+    assert.match(rowOf(out, "a@example.com"), /\| —（非対応） \| — \|$/);
     assert.match(out, /「—（非対応）」は、Claude Code の窓口から取得できないため表示していないという意味です。0 件という意味ではありません/);
     assert.doesNotMatch(out, /「未取得」/);
   });
@@ -178,6 +179,26 @@ describe("renderReport（日本語）", () => {
     assert.ok(Math.min(...tail) > Math.max(...order));
     assert.match(out, /\n\| 週間 リセット \| サービス \| アカウント \|/);
   });
+
+  it("次回更新は契約を始めた日から毎月の更新日を出し、Codex は「—」と注記を出す", () => {
+    // 4/8 12:46 UTC に開始 → 次は 10/8 12:46 UTC（21:46 JST）。NOW は 9/25
+    const subscribed: Snapshot = { ...claude, billingAnchor: new Date("2026-04-08T12:46:12Z") };
+    const out = render({ fresh: [subscribed, codex] });
+    assert.match(out, /\| Banked reset \| 次回更新 \|/);
+    assert.match(rowOf(out, "a@example.com"), /\| 10\/8\(木\)（あと13日） \|$/);
+    assert.match(rowOf(out, "b@example.com"), /\| — \|$/);
+    assert.match(out, /- 次回更新は目安です。Claude は契約を始めた日から毎月同じ日に更新される/);
+    assert.match(out, /- Codex の次回更新は、Codex の窓口から取得できないため「—」です。/);
+  });
+
+  it("次回更新が今日なら「今日」と出し、基準が無ければ注記を出さない", () => {
+    const today: Snapshot = { ...claude, billingAnchor: new Date("2026-07-25T10:00:00Z") }; // 9/25 19:00 JST
+    assert.match(rowOf(render({ fresh: [today] }), "a@example.com"), /\| 9\/25\(金\)（今日） \|$/);
+    assert.doesNotMatch(render({ fresh: [claude] }), /次回更新は目安/);
+    // 9/25 16:00 UTC は日本時間では 9/26 01:00。日数は表示のタイムゾーンの暦日で数える
+    const tomorrow: Snapshot = { ...claude, billingAnchor: new Date("2026-08-25T16:00:00Z") };
+    assert.match(rowOf(render({ fresh: [tomorrow] }), "a@example.com"), /\| 9\/26\(土\)（あと1日） \|$/);
+  });
 });
 
 describe("renderReport（英語）", () => {
@@ -189,11 +210,11 @@ describe("renderReport（英語）", () => {
     assert.match(out, /\n\| Weekly reset \| Service \| Account \| Weekly left \| Other weekly \| Short-term \| Banked resets \|/);
     assert.equal(
       rowOf(out, "a@example.com"),
-      "| Sun 9/27 05:00 (in 1d 15h) | Claude | a@example.com (max · .claude) | ████████░░ 83% | Fable 100% | 5h 73% (Fri 9/25 16:50) | not fetched |",
+      "| Sun 9/27 05:00 (in 1d 15h) | Claude | a@example.com (max · .claude) | ████████░░ 83% | Fable 100% | 5h 73% (Fri 9/25 16:50) | not fetched | — |",
     );
     assert.equal(
       rowOf(out, "b@example.com"),
-      "| Sat 9/26 17:49 (in 1d 3h) | Codex | b@example.com (pro · .codex-account-b) | ░░░░░░░░░░ **0%** | — | — | 1 (expires Fri 10/23 06:01) |",
+      "| Sat 9/26 17:49 (in 1d 3h) | Codex | b@example.com (pro · .codex-account-b) | ░░░░░░░░░░ **0%** | — | — | 1 (expires Fri 10/23 06:01) | — |",
     );
   });
 
@@ -207,8 +228,37 @@ describe("renderReport（英語）", () => {
     const out = render({ cached: [old], excluded: [".codex-x (not logged in)"] });
     assert.match(out, /〔as of Sat 9\/19 09:00〕 \| █░░░░░░░░░ \*\*10%\*\* \|/);
     assert.match(out, /- “— \(not supported\)” under Banked resets means .* It does not mean zero/);
-    assert.match(rowOf(out, "a@example.com"), /\| — \(not supported\) \|$/);
+    assert.match(rowOf(out, "a@example.com"), /\| — \(not supported\) \| — \|$/);
     assert.match(out, /- Not shown: \.codex-x \(not logged in\)/);
+  });
+
+  it("次回更新を英語で出す", () => {
+    const subscribed: Snapshot = { ...claude, billingAnchor: new Date("2026-04-08T12:46:12Z") };
+    const out = render({ fresh: [subscribed] });
+    assert.match(out, /\| Banked resets \| Next renewal \|/);
+    assert.match(rowOf(out, "a@example.com"), /\| Thu 10\/8 \(in 13d\) \|$/);
+    assert.match(out, /- Next renewal is an estimate: for Claude, ai-hp assumes the plan renews every month/);
+  });
+});
+
+describe("nextMonthlyRenewal", () => {
+  const at = (iso: string) => new Date(iso);
+
+  it("同じ日・同じ時刻の、now より後の最初の日時を返す", () => {
+    assert.equal(nextMonthlyRenewal(at("2026-04-08T12:46:12Z"), NOW).toISOString(), "2026-10-08T12:46:12.000Z");
+    assert.equal(nextMonthlyRenewal(at("2020-01-15T00:00:00Z"), NOW).toISOString(), "2026-10-15T00:00:00.000Z");
+  });
+
+  it("ちょうど更新の時刻なら次の月、基準が未来ならその日時", () => {
+    assert.equal(nextMonthlyRenewal(at("2026-08-25T05:00:00Z"), NOW).toISOString(), "2026-10-25T05:00:00.000Z");
+    assert.equal(nextMonthlyRenewal(at("2026-10-11T01:57:52Z"), NOW).toISOString(), "2026-10-11T01:57:52.000Z");
+  });
+
+  it("その月に無い日は月末にずらし、翌月は元の日に戻す", () => {
+    const anchor = at("2026-01-31T10:00:00Z");
+    assert.equal(nextMonthlyRenewal(anchor, at("2026-02-10T00:00:00Z")).toISOString(), "2026-02-28T10:00:00.000Z");
+    assert.equal(nextMonthlyRenewal(anchor, at("2026-03-01T00:00:00Z")).toISOString(), "2026-03-31T10:00:00.000Z");
+    assert.equal(nextMonthlyRenewal(anchor, at("2026-04-01T00:00:00Z")).toISOString(), "2026-04-30T10:00:00.000Z");
   });
 });
 
@@ -238,6 +288,9 @@ describe("cache", () => {
       ],
     );
     assert.equal(reviveSnapshot(JSON.parse(JSON.stringify(codex)))?.resetCredits?.items[0].expiresAt?.toISOString(), "2026-10-22T21:01:24.000Z");
+    const subscribed: Snapshot = { ...claude, billingAnchor: new Date("2026-04-08T12:46:12Z") };
+    assert.equal(reviveSnapshot(JSON.parse(JSON.stringify(subscribed)))?.billingAnchor?.toISOString(), "2026-04-08T12:46:12.000Z");
+    assert.equal(reviveSnapshot(JSON.parse(JSON.stringify(claude)))?.billingAnchor, undefined);
   });
 
   it("今回取れたアカウントと 14 日より古い値は前回値として使わない", () => {

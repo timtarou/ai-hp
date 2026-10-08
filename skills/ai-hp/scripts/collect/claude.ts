@@ -21,7 +21,21 @@ function statePath(configDir: string): string {
 }
 
 /** 同じユーザーでも個人と Team では組織（organizationUuid）が違い、利用枠も別になる */
-type ClaudeAccount = { accountUuid: string; organizationUuid: string; email: string };
+type ClaudeAccount = { accountUuid: string; organizationUuid: string; email: string; billingAnchor?: Date };
+
+/**
+ * oauthAccount（Claude Code がログイン時に保存するプロフィール。トークンは含まない）から読む。
+ * 契約を始めた日時は、サブスクリプション払い（billingType が *_subscription）のときだけ更新の基準にする
+ */
+export function parseClaudeAccount(oauthAccount: Obj | undefined): ClaudeAccount | undefined {
+  const accountUuid = str(oauthAccount?.accountUuid);
+  const email = str(oauthAccount?.emailAddress);
+  const organizationUuid = str(oauthAccount?.organizationUuid) ?? "none";
+  if (!accountUuid || !email) return undefined;
+  const subscribed = /_subscription$/.test(str(oauthAccount?.billingType) ?? "");
+  const started = subscribed ? dateOrUndefined(oauthAccount?.subscriptionCreatedAt) : undefined;
+  return { accountUuid, organizationUuid, email, billingAnchor: started };
+}
 
 async function readAccount(configDir: string): Promise<ClaudeAccount | undefined> {
   let raw: string;
@@ -30,11 +44,7 @@ async function readAccount(configDir: string): Promise<ClaudeAccount | undefined
   } catch {
     return undefined;
   }
-  const account = obj(obj(JSON.parse(raw))?.oauthAccount);
-  const accountUuid = str(account?.accountUuid);
-  const email = str(account?.emailAddress);
-  const organizationUuid = str(account?.organizationUuid) ?? "none";
-  return accountUuid && email ? { accountUuid, organizationUuid, email } : undefined;
+  return parseClaudeAccount(obj(obj(JSON.parse(raw))?.oauthAccount));
 }
 
 function sameAccount(a: ClaudeAccount | undefined, b: ClaudeAccount): boolean {
@@ -43,7 +53,8 @@ function sameAccount(a: ClaudeAccount | undefined, b: ClaudeAccount): boolean {
 
 function dateOrUndefined(v: unknown): Date | undefined {
   const s = str(v);
-  return s ? new Date(s) : undefined;
+  const d = s ? new Date(s) : undefined;
+  return d && !Number.isNaN(d.getTime()) ? d : undefined;
 }
 
 function scopeName(limit: Obj): string {
@@ -152,6 +163,7 @@ export async function collectClaude(opts: {
     limits: parsed.limits,
     // Claude の Banked reset は Claude Code の窓口（get_usage）に含まれないため表示しない
     resetCreditsOff: true,
+    billingAnchor: after?.billingAnchor,
     fetchedAt: new Date(),
     sources: [configDir],
   };

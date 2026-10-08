@@ -24,6 +24,37 @@ export function formatDateTime(d, timeZone) {
     const time = `${pad(p.hour)}:${pad(p.minute)}`;
     return getLang() === "ja" ? `${p.month}/${p.day}(${p.weekday}) ${time}` : `${p.weekday} ${p.month}/${p.day} ${time}`;
 }
+/** ja: 10/16(金) / en: Fri 10/16 */
+export function formatDate(d, timeZone) {
+    const p = parts(d, timeZone);
+    return getLang() === "ja" ? `${p.month}/${p.day}(${p.weekday})` : `${p.weekday} ${p.month}/${p.day}`;
+}
+/** 表示するタイムゾーンでの暦日の差（今日なら 0） */
+export function calendarDaysBetween(from, to, timeZone) {
+    const day = (d) => {
+        const p = parts(d, timeZone);
+        return Date.UTC(Number(p.year), Number(p.month) - 1, Number(p.day)) / 86_400_000;
+    };
+    return day(to) - day(from);
+}
+/**
+ * 毎月同じ日・同じ時刻に更新されるとして、now より後の最初の更新日時（anchor が未来ならそれ自身）。
+ * その月に無い日（31 日など）は月末にずらし、翌月は元の日に戻す（Stripe の月払いと同じ）。
+ */
+export function nextMonthlyRenewal(anchor, now) {
+    const y = anchor.getUTCFullYear();
+    const m = anchor.getUTCMonth();
+    const day = anchor.getUTCDate();
+    const timeOfDay = anchor.getTime() - Date.UTC(y, m, day);
+    // 古い anchor でも 1 か月ずつ数えずに済むよう、直前の月から調べる
+    let k = Math.max(0, (now.getUTCFullYear() - y) * 12 + now.getUTCMonth() - m - 1);
+    for (;; k++) {
+        const lastDay = new Date(Date.UTC(y, m + k + 1, 0)).getUTCDate();
+        const at = new Date(Date.UTC(y, m + k, Math.min(day, lastDay)) + timeOfDay);
+        if (at > now)
+            return at;
+    }
+}
 /** 2026-09-25 14:10 */
 export function formatFullDateTime(d, timeZone) {
     const p = parts(d, timeZone);

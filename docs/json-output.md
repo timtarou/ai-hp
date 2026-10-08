@@ -42,6 +42,7 @@ Exit code `1` means `error`; all other statuses exit `0`. Always inspect stdout 
       "resetsAt": "2026-09-30T00:00:00.000Z"
     }
   ],
+  "renewal": null,
   "resetCredits": {
     "status": "available",
     "available": 0,
@@ -57,6 +58,7 @@ Exit code `1` means `error`; all other statuses exit `0`. Always inspect stdout 
 - `limits`: only reported limits. Each has `kind` (`weekly`, `scoped`, or `short`), nullable `scope` and `windowHours`, numeric `usedPercent`, and nullable `resetsAt`. An absent limit is not a zero-use limit and does not prove that a provider does not support it.
 - Dates are UTC ISO 8601 strings or `null` when absent/invalid. A null reset time means no usable reset timestamp was reported; it must not be invented.
 - `resetCredits.status`: `available` means the count was obtained, **including zero**; `unknown` means it was not obtained; `unsupported` means the collector cannot query it. The latter two return `available: null`, `items: []`, and `note: null`.
+- `renewal`: `null` when unknown (always for Codex). Otherwise `anchorAt` is the observed date the plan renews from (for Claude, when the subscription started, from Claude Code's saved profile), `nextAt` is the first monthly renewal after `generatedAt` computed from it, and `estimated` is always `true`: annual billing or a recent plan change can make the real date differ.
 - Credit items contain `title`, `count`, nullable `grantedAt`, `startsAt`, `expiresAt`, and boolean `paused`. These are observations, not a command to redeem credits.
 
 Accounts are sorted by upcoming weekly reset, with unknown or passed resets last, then by provider/email/account key. No observed percentage or credit count is changed based on elapsed time. In particular, cached usage does not become 0% used after a scheduled reset; a UI should show its observation time and refresh it.

@@ -23,6 +23,14 @@ function result(overrides: Partial<CollectionResult> = {}): CollectionResult {
 }
 
 describe("JSON v1 contract", () => {
+  it("reports the observed billing anchor and an estimated next renewal, or null", () => {
+    const subscribed = { ...snapshot("sub"), billingAnchor: new Date("2026-04-08T12:46:12Z") };
+    const output = buildJsonOutput(result({ fresh: [subscribed, snapshot("none")] }));
+    const renewal = Object.fromEntries(output.accounts.map((a) => [a.accountKey, a.renewal]));
+    assert.deepEqual(renewal.sub, { anchorAt: "2026-04-08T12:46:12.000Z", nextAt: "2026-10-08T12:46:12.000Z", estimated: true });
+    assert.equal(renewal.none, null);
+  });
+
   it("preserves observed values even after reset/credit expiry, with explicit cache freshness", () => {
     const cached = { ...snapshot("old"), resetCredits: { available: 1, items: [{ title: "Full reset", count: 1, expiresAt: new Date("2026-09-26T11:00:00Z") }] } };
     const output = buildJsonOutput(result({ cached: [cached] }));

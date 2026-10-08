@@ -37,6 +37,11 @@ export type Snapshot = {
   resetCredits?: { available: number; items: ResetCredit[]; note?: string };
   /** Banked reset を取得しない（Claude: Claude Code の窓口に含まれないため）。表では「—」 */
   resetCreditsOff?: boolean;
+  /**
+   * 毎月この日時と同じ日・時刻に契約が更新される、という基準の日時（過去でも未来でもよい）。
+   * Claude は契約を始めた日時。次回更新は表示のときに now から計算する（time.ts の nextMonthlyRenewal）
+   */
+  billingAnchor?: Date;
   /** 利用枠は取れたが一部（Banked reset 等）を取れなかった理由 */
   warning?: string;
   fetchedAt: Date;

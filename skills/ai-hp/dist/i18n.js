@@ -23,6 +23,7 @@ const messages = {
     hScoped: { en: "Other weekly", ja: "別枠（週間）" },
     hShort: { en: "Short-term", ja: "短期枠" },
     hBanked: { en: "Banked resets", ja: "Banked reset" },
+    hRenewal: { en: "Next renewal", ja: "次回更新" },
     hoursWindow: { en: "{h}h", ja: "{h}時間" },
     notStarted: { en: "not started", ja: "未開始" },
     resetDone: { en: "passed ({time})", ja: "済（{time}）" },
@@ -39,6 +40,8 @@ const messages = {
     noExpiry: { en: "no expiry", ja: "失効日時不明" },
     startsFrom: { en: "from {time}", ja: "{time} から" },
     paused: { en: "paused", ja: "一時停止中" },
+    renewToday: { en: "today", ja: "今日" },
+    renewInDays: { en: "in {d}d", ja: "あと{d}日" },
     noteStale: {
         en: "Rows marked 〔as of …〕 are previous observations, not current values. Use --fresh-only to hide them. Connect each additional account with `ai-hp connect` to query it on future runs.",
         ja: "〔○時点〕の行は前回値です。現在値ではありません。今回取得できた値だけを見るには --fresh-only を指定してください。別アカウントも毎回問い合わせるには `ai-hp connect` で個別に接続してください。",
@@ -52,6 +55,14 @@ const messages = {
         ja: "Banked reset の「—（非対応）」は、Claude Code の窓口から取得できないため表示していないという意味です。0 件という意味ではありません（0 件のときは「0」と表示します）。",
     },
     bankedUnsupported: { en: "— (not supported)", ja: "—（非対応）" },
+    noteRenewal: {
+        en: "Next renewal is an estimate: for Claude, ai-hp assumes the plan renews every month on the day it started. Annual billing or a recent plan change can make it differ.",
+        ja: "次回更新は目安です。Claude は契約を始めた日から毎月同じ日に更新されるものとして計算しています（年払いや、プランを変えた直後は違うことがあります）。",
+    },
+    noteRenewalCodex: {
+        en: "Codex shows “—” under Next renewal because the Codex CLI does not report it.",
+        ja: "Codex の次回更新は、Codex の窓口から取得できないため「—」です。",
+    },
     noteExcluded: { en: "Not shown: {list}", ja: "表示していないフォルダ: {list}" },
     noteFailed: { en: "Failed: {detail}", ja: "取得に失敗: {detail}" },
     // 残り時間

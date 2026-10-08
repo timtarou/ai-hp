@@ -1,6 +1,6 @@
 ---
 name: ai-hp
-description: Show weekly usage limits, reset times, Claude's model-specific weekly limits (e.g. Fable), short-term limits and banked resets for every Claude Code and Codex account on this machine, soonest weekly reset first. Use when the user asks about usage limits, remaining quota, when limits reset, which account to use next, banked resets, or their "AI HP" (利用枠、残り枠、使用量、リセットはいつ、Banked reset、AI の HP).
+description: Show weekly usage limits, reset times, Claude's model-specific weekly limits (e.g. Fable), short-term limits, banked resets and the next plan renewal for every Claude Code and Codex account on this machine, soonest weekly reset first. Use when the user asks about usage limits, remaining quota, when limits reset, which account to use next, banked resets, when plans renew, or their "AI HP" (利用枠、残り枠、使用量、リセットはいつ、Banked reset、契約の更新日、AI の HP).
 ---
 
 # AI usage limits
@@ -22,7 +22,7 @@ Pass `--lang` matching the language the user is writing in. Always pass `--markd
 
 ## Showing the output
 
-- Paste the output as-is. Do not summarize, reorder, translate or drop columns (other weekly limits such as Fable, short-term limits, banked resets).
+- Paste the output as-is. Do not summarize, reorder, translate or drop columns (other weekly limits such as Fable, short-term limits, banked resets, next renewal).
 - By default there is no line of advice under the table. Add it only when the user asks for a tip, a one-liner or some fun: run with `--comment`, then **replace the single 💬 line under the table with your own single 💬 line** in the user's language. Keep its advice, but make it fresh and fun — a timely meme, a short anime catchphrase or a game reference (HP, MP, inns, revive items). Exactly one 💬 line in the end; do not add any other comment. Keep quotes to a few words and never mock anyone. If you cannot improve it, keep the original line.
 - If there are "Failed" lines, relay them verbatim. Never fill in values by guessing.
 

@@ -59,6 +59,7 @@ That's it for the terminal. To use it from inside Claude Code or Codex, install 
 - **Other weekly:** model-specific weekly limits with their own budget, such as Claude's **Fable** limit.
 - **Short-term:** the 5-hour limit (Claude, and Codex plans that have one).
 - **Banked resets:** resets you have in reserve, with their expiry (Codex). Claude rows show **“— (not supported)”**: Claude Code does not expose Claude’s banked resets, so ai-hp cannot show them. **This does not mean zero.** Zero shows as “0” (see [Claude's banked resets](#claudes-banked-resets-not-shown)).
+- **Next renewal:** when each Claude plan renews next. It is an estimate: ai-hp takes the date the subscription started from Claude Code's saved profile and assumes it renews on that day every month (annual billing or a recent plan change can differ). Codex rows show “—”, because the Codex CLI does not report it.
 - A plain **“—”** under *Other weekly* or *Short-term* means that account has no such limit.
 - The same email with a **personal and a Team plan** shows as two rows, because they have separate limits.
 - By default, only accounts fetched during this run are shown; the local usage cache is neither read nor written. With `--include-cached`, unavailable accounts can show their last values, marked *as of …*.
@@ -73,12 +74,12 @@ When the output is not a terminal (the skill, a pipe, a file), ai-hp prints Mark
 ```
 ### AI HP (2026-09-25 15:02 · my-mac · soonest weekly reset first)
 
-| Weekly reset | Service | Account | Weekly left | Other weekly | Short-term | Banked resets |
-|---|---|---|---|---|---|---|
-| Sat 9/26 17:49 (in 1d 2h) | Codex | b@example.com (pro · .codex-work) | ░░░░░░░░░░ **0%** | — | — | 1 (expires Fri 10/23 06:01) |
-| Sun 9/27 04:59 (in 1d 13h) | Claude | a@example.com (max · .claude) | ████████░░ 80% | Fable 100% | 5h 59% (Fri 9/25 16:49) | — (not supported) |
-| Wed 9/30 06:09 (in 4d 15h) | Codex | c@example.com (pro · .codex) | ██░░░░░░░░ **17%** | — | — | 0 |
-| Thu 10/1 08:00 (in 5d 16h) | Claude | a@example.com (team · .claude-a-team) | ██████████ 100% | Fable 100% | 5h 100% (not started) | — (not supported) |
+| Weekly reset | Service | Account | Weekly left | Other weekly | Short-term | Banked resets | Next renewal |
+|---|---|---|---|---|---|---|---|
+| Sat 9/26 17:49 (in 1d 2h) | Codex | b@example.com (pro · .codex-work) | ░░░░░░░░░░ **0%** | — | — | 1 (expires Fri 10/23 06:01) | — |
+| Sun 9/27 04:59 (in 1d 13h) | Claude | a@example.com (max · .claude) | ████████░░ 80% | Fable 100% | 5h 59% (Fri 9/25 16:49) | — (not supported) | Thu 10/8 (in 13d) |
+| Wed 9/30 06:09 (in 4d 15h) | Codex | c@example.com (pro · .codex) | ██░░░░░░░░ **17%** | — | — | 0 | — |
+| Thu 10/1 08:00 (in 5d 16h) | Claude | a@example.com (team · .claude-a-team) | ██████████ 100% | Fable 100% | 5h 100% (not started) | — (not supported) | Thu 10/29 (in 34d) |
 ```
 
 </details>

@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { beforeEach, describe, it } from "node:test";
-import { parseClaudeUsage } from "../skills/ai-hp/scripts/collect/claude.ts";
+import { parseClaudeAccount, parseClaudeUsage } from "../skills/ai-hp/scripts/collect/claude.ts";
 import { parseCodexRateLimits, pickWindows } from "../skills/ai-hp/scripts/collect/codex.ts";
 import { setLang } from "../skills/ai-hp/scripts/i18n.ts";
 
@@ -90,6 +90,34 @@ describe("parseClaudeUsage", () => {
       skipped: "no plan limits (API key or similar)",
       code: "no_plan_limits",
     });
+  });
+});
+
+describe("parseClaudeAccount", () => {
+  const profile = {
+    accountUuid: "user-1",
+    organizationUuid: "org-1",
+    emailAddress: "a@example.com",
+    billingType: "stripe_subscription",
+    subscriptionCreatedAt: "2026-04-08T12:46:12.216159Z",
+  };
+
+  it("サブスクリプション払いなら契約を始めた日時を更新の基準にする", () => {
+    const account = parseClaudeAccount(profile);
+    assert.equal(account?.billingAnchor?.toISOString(), "2026-04-08T12:46:12.216Z");
+    assert.deepEqual([account?.accountUuid, account?.organizationUuid, account?.email], ["user-1", "org-1", "a@example.com"]);
+  });
+
+  it("サブスクリプション払いでない・日時が無い・壊れているときは基準なし", () => {
+    assert.equal(parseClaudeAccount({ ...profile, billingType: undefined })?.billingAnchor, undefined);
+    assert.equal(parseClaudeAccount({ ...profile, billingType: "invoice" })?.billingAnchor, undefined);
+    assert.equal(parseClaudeAccount({ ...profile, subscriptionCreatedAt: null })?.billingAnchor, undefined);
+    assert.equal(parseClaudeAccount({ ...profile, subscriptionCreatedAt: "not a date" })?.billingAnchor, undefined);
+  });
+
+  it("アカウント ID かメールが無ければ未ログイン扱い", () => {
+    assert.equal(parseClaudeAccount({ ...profile, accountUuid: undefined }), undefined);
+    assert.equal(parseClaudeAccount(undefined), undefined);
   });
 });
 

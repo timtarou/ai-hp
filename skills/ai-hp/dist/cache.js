@@ -59,6 +59,7 @@ export function reviveSnapshot(v) {
             ? { available: num(credits.available) ?? items.length, items, note: str(credits.note) }
             : undefined,
         resetCreditsOff: o.resetCreditsOff === true,
+        billingAnchor: date(o.billingAnchor),
         fetchedAt,
         sources: arr(o.sources).filter((s) => typeof s === "string"),
     };

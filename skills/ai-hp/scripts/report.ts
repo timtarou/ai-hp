@@ -1,6 +1,6 @@
 import path from "node:path";
 import { getLang, t } from "./i18n.ts";
-import { formatDateTime, formatFullDateTime, formatRemaining } from "./time.ts";
+import { calendarDaysBetween, formatDate, formatDateTime, formatFullDateTime, formatRemaining, nextMonthlyRenewal } from "./time.ts";
 import type { Limit, Snapshot } from "./types.ts";
 
 const PROVIDER_NAME = { claude: "Claude", codex: "Codex" } as const;
@@ -128,6 +128,14 @@ function creditsCell(s: Snapshot, now: Date, timeZone: string): string {
   return details.length > 0 ? `${total}${paren(details.join(getLang() === "ja" ? "、" : "; "))}` : total;
 }
 
+/** 次回の契約更新日（目安）。基準の日時が無ければ「—」 */
+function renewalCell(s: Snapshot, now: Date, timeZone: string): string {
+  if (!s.billingAnchor) return "—";
+  const at = nextMonthlyRenewal(s.billingAnchor, now);
+  const days = calendarDaysBetween(now, at, timeZone);
+  return `${formatDate(at, timeZone)}${paren(days === 0 ? t("renewToday") : t("renewInDays", { d: days }))}`;
+}
+
 function accountCell(s: Snapshot, stale: boolean, timeZone: string): string {
   const detail = [s.plan, s.sources.map((p) => path.basename(p)).join(" / ")].filter(Boolean).join(" · ");
   const staleNote = stale ? ` 〔${t("staleAt", { time: formatDateTime(s.fetchedAt, timeZone) })}〕` : "";
@@ -176,6 +184,7 @@ export function buildReport(input: ReportInput): ReportModel {
       scopedCell(s, weekly, now, timeZone),
       shortTermCell(s, now, timeZone),
       creditsCell(s, now, timeZone),
+      renewalCell(s, now, timeZone),
     ];
   });
 
@@ -183,12 +192,14 @@ export function buildReport(input: ReportInput): ReportModel {
   if (input.cached.length > 0) notes.push(t("noteStale"));
   if (entries.some((r) => !r.s.resetCredits && !r.s.resetCreditsOff)) notes.push(t("noteNotFetched"));
   if (entries.some((r) => r.s.resetCreditsOff)) notes.push(t("noteBankedOff"));
+  if (entries.some((r) => r.s.provider === "claude" && r.s.billingAnchor)) notes.push(t("noteRenewal"));
+  if (entries.some((r) => r.s.provider === "codex" && !r.s.billingAnchor)) notes.push(t("noteRenewalCodex"));
   if (input.excluded.length > 0) notes.push(t("noteExcluded", { list: input.excluded.join(getLang() === "ja" ? "、" : ", ") }));
   for (const p of input.problems) notes.push(t("noteFailed", { detail: p }));
 
   return {
     title: t("title", { time: formatFullDateTime(now, timeZone), host: input.host }),
-    headers: [t("hReset"), t("hService"), t("hAccount"), t("hWeekly"), t("hScoped"), t("hShort"), t("hBanked")],
+    headers: [t("hReset"), t("hService"), t("hAccount"), t("hWeekly"), t("hScoped"), t("hShort"), t("hBanked"), t("hRenewal")],
     rows,
     comment: input.comment,
     notes,
@@ -200,7 +211,7 @@ export function renderMarkdown(model: ReportModel): string {
   const { headers } = model;
   const lines = [`### ${model.title}`, "", `| ${headers.join(" | ")} |`, `|${headers.map(() => "---").join("|")}|`];
   for (const cells of model.rows) lines.push(`| ${cells.join(" | ")} |`);
-  if (model.rows.length === 0) lines.push(`| — | — | ${t("noAccounts")} | | | | |`);
+  if (model.rows.length === 0) lines.push(`| — | — | ${t("noAccounts")} | | | | | |`);
   if (model.comment) lines.push("", `> 💬 ${model.comment}`);
   if (model.notes.length > 0) lines.push("", ...model.notes.map((n) => `- ${n}`));
   return lines.join("\n");

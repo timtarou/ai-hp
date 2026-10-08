@@ -1,12 +1,13 @@
 import { collectionExitCode } from "./collect.ts";
 import type { CollectionResult } from "./collect.ts";
+import { nextMonthlyRenewal } from "./time.ts";
 import type { Snapshot } from "./types.ts";
 
 function iso(date: Date | undefined): string | null {
   return date && Number.isFinite(date.getTime()) ? date.toISOString() : null;
 }
 
-function account(snapshot: Snapshot, freshness: "fresh" | "cached") {
+function account(snapshot: Snapshot, freshness: "fresh" | "cached", now: Date) {
   const credits = snapshot.resetCredits;
   return {
     provider: snapshot.provider,
@@ -24,6 +25,10 @@ function account(snapshot: Snapshot, freshness: "fresh" | "cached") {
       usedPercent: limit.usedPercent,
       resetsAt: iso(limit.resetsAt),
     })),
+    // anchorAt は取得値、nextAt はそこから毎月更新として計算した目安
+    renewal: snapshot.billingAnchor
+      ? { anchorAt: iso(snapshot.billingAnchor), nextAt: iso(nextMonthlyRenewal(snapshot.billingAnchor, now)), estimated: true as const }
+      : null,
     resetCredits: snapshot.resetCreditsOff
       ? { status: "unsupported" as const, available: null, items: [], note: null }
       : !credits
@@ -47,8 +52,8 @@ function account(snapshot: Snapshot, freshness: "fresh" | "cached") {
 /** 未加工の取得値を返す。期限を過ぎても残量やリセット権の数を推測しない。 */
 export function buildJsonOutput(result: CollectionResult) {
   const accounts = [
-    ...result.fresh.map((snapshot) => account(snapshot, "fresh")),
-    ...result.cached.map((snapshot) => account(snapshot, "cached")),
+    ...result.fresh.map((snapshot) => account(snapshot, "fresh", result.now)),
+    ...result.cached.map((snapshot) => account(snapshot, "cached", result.now)),
   ];
   const nextReset = (entry: typeof accounts[number]) => {
     const date = entry.limits.find((limit) => limit.kind === "weekly")?.resetsAt;
